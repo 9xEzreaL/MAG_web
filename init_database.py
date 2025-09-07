@@ -41,101 +41,101 @@ def init_database():
             
             # 4. 創建初始分類
             print("📂 創建初始分類...")
-            categories_data = [
-                {
-                    'name': 'IQOS',
-                    'description': 'IQOS電子煙產品',
-                    'image_url': '/uploads/IQOS_Logo.svg'
-                },
-                {
-                    'name': '加熱菸草',
-                    'description': '加熱菸草相關產品',
-                    'image_url': '/uploads/placeholder.jpg'
-                },
-                {
-                    'name': '配件',
-                    'description': 'IQOS配件和周邊商品',
-                    'image_url': '/uploads/placeholder.jpg'
-                }
-            ]
+            #categories_data = [
+            #    {
+            #        'name': 'IQOS',
+            #        'description': 'IQOS電子煙產品',
+            #        'image_url': '/uploads/IQOS_Logo.svg'
+            #    },
+            #    {
+            #        'name': '加熱菸草',
+            #        'description': '加熱菸草相關產品',
+            #        'image_url': '/uploads/placeholder.jpg'
+            #    },
+            #    {
+            #        'name': '配件',
+            #        'description': 'IQOS配件和周邊商品',
+            #        'image_url': '/uploads/placeholder.jpg'
+            #    }
+            #]
             
-            categories = []
-            for cat_data in categories_data:
-                category = Category(
-                    name=cat_data['name'],
-                    description=cat_data['description'],
-                    image_url=cat_data['image_url'],
-                    is_active=True,
-                    created_at=datetime.utcnow()
-                )
-                db.session.add(category)
-                categories.append(category)
+            #categories = []
+            #for cat_data in categories_data:
+            #    category = Category(
+            #        name=cat_data['name'],
+            #        description=cat_data['description'],
+            #        image_url=cat_data['image_url'],
+            #        is_active=True,
+            #        created_at=datetime.utcnow()
+            #    )
+            #    db.session.add(category)
+            #    categories.append(category)
             
             # 5. 創建初始商品
             print("📦 創建初始商品...")
-            items_data = [
-                {
-                    'name': 'IQOS 3 DUO',
-                    'description': 'IQOS 3 DUO 電子煙主機',
-                    'price': 2990.0,
-                    'quantity_left': 50,
-                    'image_url': '/uploads/placeholder.jpg',
-                    'category': categories[0]  # IQOS分類
-                },
-                {
-                    'name': 'IQOS 3 MULTI',
-                    'description': 'IQOS 3 MULTI 電子煙主機',
-                    'price': 2490.0,
-                    'quantity_left': 30,
-                    'image_url': '/uploads/placeholder.jpg',
-                    'category': categories[0]  # IQOS分類
-                },
-                {
-                    'name': 'HEETS 黃色',
-                    'description': 'HEETS 黃色口味加熱菸草',
-                    'price': 200.0,
-                    'quantity_left': 100,
-                    'image_url': '/uploads/placeholder.jpg',
-                    'category': categories[1]  # 加熱菸草分類
-                },
-                {
-                    'name': 'HEETS 藍色',
-                    'description': 'HEETS 藍色口味加熱菸草',
-                    'price': 200.0,
-                    'quantity_left': 80,
-                    'image_url': '/uploads/placeholder.jpg',
-                    'category': categories[1]  # 加熱菸草分類
-                },
-                {
-                    'name': 'IQOS 充電器',
-                    'description': 'IQOS 專用充電器',
-                    'price': 500.0,
-                    'quantity_left': 25,
-                    'image_url': '/uploads/placeholder.jpg',
-                    'category': categories[2]  # 配件分類
-                },
-                {
-                    'name': 'IQOS 清潔套組',
-                    'description': 'IQOS 清潔保養套組',
-                    'price': 300.0,
-                    'quantity_left': 40,
-                    'image_url': '/uploads/placeholder.jpg',
-                    'category': categories[2]  # 配件分類
-                }
-            ]
+            # items_data = [
+            #    {
+            #        'name': 'IQOS 3 DUO',
+            #        'description': 'IQOS 3 DUO 電子煙主機',
+            #        'price': 2990.0,
+            #        'quantity_left': 50,
+            #        'image_url': '/uploads/placeholder.jpg',
+            #        'category': categories[0]  # IQOS分類
+            #    },
+            #    {
+            #        'name': 'IQOS 3 MULTI',
+            #        'description': 'IQOS 3 MULTI 電子煙主機',
+            #        'price': 2490.0,
+            #        'quantity_left': 30,
+            #        'image_url': '/uploads/placeholder.jpg',
+            #        'category': categories[0]  # IQOS分類
+            #    },
+            #    {
+            #        'name': 'HEETS 黃色',
+            #        'description': 'HEETS 黃色口味加熱菸草',
+            #        'price': 200.0,
+            #        'quantity_left': 100,
+            #        'image_url': '/uploads/placeholder.jpg',
+            #        'category': categories[1]  # 加熱菸草分類
+            #    },
+            #    {
+            #        'name': 'HEETS 藍色',
+            #        'description': 'HEETS 藍色口味加熱菸草',
+            #        'price': 200.0,
+            #        'quantity_left': 80,
+            #        'image_url': '/uploads/placeholder.jpg',
+            #        'category': categories[1]  # 加熱菸草分類
+            #    },
+            #    {
+            #        'name': 'IQOS 充電器',
+            #        'description': 'IQOS 專用充電器',
+            #        'price': 500.0,
+            #        'quantity_left': 25,
+            #        'image_url': '/uploads/placeholder.jpg',
+            #        'category': categories[2]  # 配件分類
+            #    },
+            #    {
+            #        'name': 'IQOS 清潔套組',
+            #        'description': 'IQOS 清潔保養套組',
+            #        'price': 300.0,
+            #        'quantity_left': 40,
+            #        'image_url': '/uploads/placeholder.jpg',
+            #        'category': categories[2]  # 配件分類
+            #    }
+            #]
             
-            for item_data in items_data:
-                item = Item(
-                    name=item_data['name'],
-                    description=item_data['description'],
-                    price=item_data['price'],
-                    quantity_left=item_data['quantity_left'],
-                    image_url=item_data['image_url'],
-                    category_id=item_data['category'].id,
-                    is_active=True,
-                    created_at=datetime.utcnow()
-                )
-                db.session.add(item)
+            #for item_data in items_data:
+            #    item = Item(
+            #        name=item_data['name'],
+            #        description=item_data['description'],
+            #        price=item_data['price'],
+            #        quantity_left=item_data['quantity_left'],
+            #        image_url=item_data['image_url'],
+            #        category_id=item_data['category'].id,
+            #        is_active=True,
+            #        created_at=datetime.utcnow()
+            #    )
+            #    db.session.add(item)
             
             # 6. 提交所有變更
             print("💾 提交資料庫變更...")
@@ -144,8 +144,8 @@ def init_database():
             print("✅ 資料庫初始化完成！")
             print("\n📊 初始化結果:")
             print(f"  - 管理員帳號: admin / admin123")
-            print(f"  - 分類數量: {len(categories)}")
-            print(f"  - 商品數量: {len(items_data)}")
+            #print(f"  - 分類數量: {len(categories)}")
+            #print(f"  - 商品數量: {len(items_data)}")
             print(f"  - 資料庫表格: {len(db.metadata.tables)}")
             
         except Exception as e:

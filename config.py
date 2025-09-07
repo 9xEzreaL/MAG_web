@@ -6,7 +6,8 @@ load_dotenv()
 class Config:
     SECRET_KEY = os.getenv('SECRET_KEY', 'testing')
     # 使用 MySQL 資料庫
-    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL', 'mysql+pymysql://root:@localhost:3306/shopping_db')
+    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL',
+    'mysql+pymysql://shopping_user:IQOSuser01#@localhost:3306/shopping_db')
     # 預設設定：用戶名=root, 密碼=空, 主機=localhost, 端口=3306, 資料庫=shopping_db
     # 如果需要修改，請設定環境變數 DATABASE_URL
     SQLALCHEMY_TRACK_MODIFICATIONS = False
