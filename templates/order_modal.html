@@ -1,0 +1,148 @@
+<!-- 訂單詳情模態框 -->
+<div id="orderModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 2rem; border-radius: 10px; width: 90%; max-width: 800px; max-height: 90vh; overflow-y: auto;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h3 id="orderModalTitle">訂單詳情</h3>
+            <button onclick="closeOrderModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
+        </div>
+
+        <div id="orderDetails">
+            <!-- 訂單詳情內容將在這裡動態載入 -->
+        </div>
+
+        <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem;">
+            <button onclick="closeOrderModal()" style="padding: 0.75rem 1.5rem; border: 2px solid #ddd; background: white; border-radius: 5px; cursor: pointer;">關閉</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// 查看訂單詳情
+async function viewOrderDetails(orderId) {
+    try {
+        const response = await fetch(`${API_BASE}/orders/${orderId}`, {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+            }
+        });
+        
+        if (response.ok) {
+            const order = await response.json();
+            displayOrderDetails(order);
+            document.getElementById('orderModal').style.display = 'block';
+        } else {
+            alert('載入訂單詳情失敗');
+        }
+    } catch (error) {
+        alert('載入訂單詳情失敗: ' + error.message);
+    }
+}
+
+// 顯示訂單詳情
+function displayOrderDetails(order) {
+    const container = document.getElementById('orderDetails');
+    
+    container.innerHTML = `
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+            <!-- 訂單資訊 -->
+            <div>
+                <h4 style="margin-bottom: 1rem; color: #333;">訂單資訊</h4>
+                <div style="background: #f8f9fa; padding: 1rem; border-radius: 5px;">
+                    <p><strong>訂單編號:</strong> #${order.id}</p>
+                    <p><strong>訂單日期:</strong> ${new Date(order.order_date).toLocaleString()}</p>
+                    <p><strong>訂單狀態:</strong> 
+                        <span style="padding: 0.25rem 0.5rem; border-radius: 3px; font-size: 0.8rem; 
+                                     background: ${getStatusColor(order.status)}; color: white;">
+                            ${getStatusText(order.status)}
+                        </span>
+                    </p>
+                    <p><strong>總金額:</strong> $${order.total_amount}</p>
+                    ${order.delivery_method ? `<p><strong>取貨方式:</strong> ${order.delivery_method === '711_store' ? '7-11店到店' : order.delivery_method}</p>` : ''}
+                    ${order.payment_method ? `<p><strong>付款方式:</strong> ${order.payment_method === 'cash_on_delivery' ? '貨到付款' : order.payment_method}</p>` : ''}
+                </div>
+            </div>
+
+            <!-- 客戶資訊 -->
+            <div>
+                <h4 style="margin-bottom: 1rem; color: #333;">客戶資訊</h4>
+                <div style="background: #f8f9fa; padding: 1rem; border-radius: 5px;">
+                    <p><strong>姓名:</strong> ${order.customer.first_name} ${order.customer.last_name}</p>
+                    <p><strong>信箱:</strong> ${order.customer.email}</p>
+                    <p><strong>電話:</strong> ${order.customer.phone || '未提供'}</p>
+                    <p><strong>地址:</strong> ${order.customer.address || '未提供'}</p>
+                </div>
+            </div>
+        </div>
+        
+        ${order.delivery_method === '711_store' && order.store_name ? `
+        <div style="margin-bottom: 2rem;">
+            <h4 style="margin-bottom: 1rem; color: #333;">🏪 7-11門市資訊</h4>
+            <div style="background: #e3f2fd; padding: 1rem; border-radius: 5px; border-left: 4px solid #2196f3;">
+                <p><strong>門市名稱:</strong> ${order.store_name}</p>
+                ${order.store_id ? `<p><strong>門市代碼:</strong> ${order.store_id}</p>` : ''}
+                ${order.store_address ? `<p><strong>門市地址:</strong> ${order.store_address}</p>` : ''}
+            </div>
+        </div>
+        ` : ''}
+        </div>
+
+        <!-- 商品清單 -->
+        <div>
+            <h4 style="margin-bottom: 1rem; color: #333;">商品清單</h4>
+            <div style="background: #f8f9fa; padding: 1rem; border-radius: 5px;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid #dee2e6;">
+                            <th style="text-align: left; padding: 0.75rem; font-weight: 500;">商品名稱</th>
+                            <th style="text-align: center; padding: 0.75rem; font-weight: 500;">數量</th>
+                            <th style="text-align: right; padding: 0.75rem; font-weight: 500;">單價</th>
+                            <th style="text-align: right; padding: 0.75rem; font-weight: 500;">小計</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${order.items.map(item => `
+                            <tr style="border-bottom: 1px solid #dee2e6;">
+                                <td style="padding: 0.75rem;">${item.item_name}</td>
+                                <td style="text-align: center; padding: 0.75rem;">${item.quantity}</td>
+                                <td style="text-align: right; padding: 0.75rem;">$${item.price}</td>
+                                <td style="text-align: right; padding: 0.75rem; font-weight: 500;">$${(item.quantity * item.price).toFixed(2)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                    <tfoot>
+                        <tr style="border-top: 2px solid #dee2e6; background: #e9ecef;">
+                            <td colspan="3" style="text-align: right; padding: 0.75rem; font-weight: 500;">總計:</td>
+                            <td style="text-align: right; padding: 0.75rem; font-weight: 500; font-size: 1.1rem;">$${order.total_amount}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    `;
+}
+
+// 取得狀態顏色
+function getStatusColor(status) {
+    switch(status) {
+        case 'pending': return '#ffc107';
+        case 'completed': return '#28a745';
+        case 'cancelled': return '#dc3545';
+        default: return '#6c757d';
+    }
+}
+
+// 取得狀態文字
+function getStatusText(status) {
+    switch(status) {
+        case 'pending': return '待處理';
+        case 'completed': return '已完成';
+        case 'cancelled': return '已取消';
+        default: return '未知';
+    }
+}
+
+// 關閉訂單模態框
+function closeOrderModal() {
+    document.getElementById('orderModal').style.display = 'none';
+}
+</script>

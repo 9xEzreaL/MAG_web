@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+
+{% block title %}首頁 - 購物網站{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-section {
+        text-align: center;
+        padding: 4rem 0;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        margin: -2rem -2rem 3rem -2rem;
+        border-radius: 0 0 20px 20px;
+    }
+
+    .hero-section h2 {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        font-weight: 700;
+    }
+
+    .hero-section p {
+        font-size: 1.2rem;
+        opacity: 0.9;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .categories-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 2rem;
+        margin-top: 2rem;
+        max-width: 800px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .category-card {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        cursor: pointer;
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .category-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+    }
+
+    .category-image {
+        width: 100%;
+        height: 250px;
+        object-fit: contain;
+        background: #f8f9fa;
+        padding: 1rem;
+    }
+
+    .category-info {
+        padding: 1.5rem;
+        text-align: center;
+    }
+
+    .category-name {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 0.5rem;
+    }
+
+    .category-description {
+        color: #666;
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+
+    .category-count {
+        background: #007bff;
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        margin-top: 1rem;
+        display: inline-block;
+    }
+
+    .empty-categories {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: #666;
+    }
+
+    .empty-categories h3 {
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+        color: #333;
+    }
+
+    .loading-categories {
+        text-align: center;
+        padding: 4rem 2rem;
+    }
+
+    .loading-spinner {
+        display: inline-block;
+        width: 40px;
+        height: 40px;
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #007bff;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    /* 響應式設計 */
+    @media (max-width: 768px) {
+        .hero-section {
+            margin: -1rem -1rem 2rem -1rem;
+            padding: 3rem 1rem;
+        }
+
+        .hero-section h2 {
+            font-size: 2rem;
+        }
+
+        .hero-section p {
+            font-size: 1rem;
+        }
+
+        .categories-grid {
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+            max-width: 400px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="hero-section">
+    <h2>IQOS</h2>
+    <p>加熱菸專賣店</p>
+</div>
+
+<div id="categoriesContainer">
+    <div class="loading-categories">
+        <div class="loading-spinner"></div>
+        <p>載入分類中...</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // 載入分類並顯示在首頁
+    async function loadCategories() {
+        try {
+            const response = await fetch(`${API_BASE}/categories`);
+            if (!response.ok) {
+                throw new Error('載入分類失敗');
+            }
+            
+            const categories = await response.json();
+            const container = document.getElementById('categoriesContainer');
+            
+            if (categories.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-categories">
+                        <h3>暫無商品分類</h3>
+                        <p>請稍後再來查看</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = `
+                <div class="categories-grid">
+                    ${categories.map(category => `
+                        <a href="/category/${category.id}" class="category-card">
+                            <img src="${category.image_url || '/uploads/placeholder.jpg'}" 
+                                 alt="${category.name}" 
+                                 class="category-image"
+                                 onerror="this.src='/uploads/placeholder.jpg'">
+                            <div class="category-info">
+                                <div class="category-name">${category.name}</div>
+                                <div class="category-description">${category.description || '探索這個分類的商品'}</div>
+                                <div class="category-count">${category.item_count || 0} 個商品</div>
+                            </div>
+                        </a>
+                    `).join('')}
+                </div>
+            `;
+            
+        } catch (error) {
+            console.error('載入分類失敗:', error);
+            document.getElementById('categoriesContainer').innerHTML = `
+                <div class="empty-categories">
+                    <h3>載入失敗</h3>
+                    <p>無法載入商品分類，請稍後再試</p>
+                </div>
+            `;
+        }
+    }
+    
+    // 頁面載入時初始化
+    document.addEventListener('DOMContentLoaded', function() {
+        loadCategories();
+    });
+</script>
+{% endblock %}

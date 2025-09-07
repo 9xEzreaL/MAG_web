@@ -1,0 +1,396 @@
+{% extends "base.html" %}
+
+{% block title %}訂單成功 - 購物網站{% endblock %}
+
+{% block extra_css %}
+<style>
+    .success-container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 2rem;
+        text-align: center;
+    }
+
+    .success-header {
+        background: white;
+        padding: 3rem 2rem;
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
+    }
+
+    .success-icon {
+        width: 80px;
+        height: 80px;
+        background: #28a745;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 2rem;
+        font-size: 2.5rem;
+        color: white;
+    }
+
+    .success-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #28a745;
+        margin-bottom: 1rem;
+    }
+
+    .success-message {
+        font-size: 1.2rem;
+        color: #666;
+        margin-bottom: 2rem;
+        line-height: 1.6;
+    }
+
+    .order-details {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        text-align: left;
+    }
+
+    .order-details h3 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 1rem;
+        text-align: center;
+    }
+
+    .detail-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .detail-row:last-child {
+        border-bottom: none;
+    }
+
+    .detail-label {
+        font-weight: 600;
+        color: #333;
+    }
+
+    .detail-value {
+        color: #666;
+    }
+
+    .store-info {
+        background: #e3f2fd;
+        border-radius: 8px;
+        padding: 1rem;
+        margin: 0.5rem 0;
+        border-left: 4px solid #2196f3;
+    }
+
+    .store-info .detail-label {
+        color: #1976d2;
+        font-weight: 600;
+    }
+
+    .store-info .detail-value {
+        color: #1976d2;
+        font-weight: 500;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .btn {
+        padding: 1rem 2rem;
+        border-radius: 10px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+        font-size: 1rem;
+    }
+
+    .btn-primary {
+        background: #007bff;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #0056b3;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,123,255,0.3);
+    }
+
+    .btn-secondary {
+        background: #6c757d;
+        color: white;
+    }
+
+    .btn-secondary:hover {
+        background: #545b62;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(108,117,125,0.3);
+    }
+
+    .loading-success {
+        text-align: center;
+        padding: 4rem 2rem;
+    }
+
+    .loading-spinner {
+        display: inline-block;
+        width: 40px;
+        height: 40px;
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #007bff;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    /* 響應式設計 */
+    @media (max-width: 768px) {
+        .success-container {
+            padding: 1rem;
+        }
+
+        .success-header {
+            padding: 2rem 1rem;
+        }
+
+        .success-title {
+            font-size: 2rem;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+        }
+
+        .btn {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="success-container">
+    <div id="successContainer">
+        <div class="loading-success">
+            <div class="loading-spinner"></div>
+            <p>載入訂單詳情中...</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let orderDetails = null;
+
+    // 從 URL 獲取訂單 ID
+    function getOrderIdFromUrl() {
+        const path = window.location.pathname;
+        const match = path.match(/\/order-success\/(\d+)/);
+        return match ? match[1] : null;
+    }
+
+    // 載入訂單詳情
+    async function loadOrderDetails() {
+        const orderId = getOrderIdFromUrl();
+        if (!orderId) {
+            showError('訂單 ID 無效');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE}/orders/${orderId}`);
+            if (!response.ok) {
+                throw new Error('載入訂單失敗');
+            }
+            
+            orderDetails = await response.json();
+            displayOrderSuccess();
+            
+        } catch (error) {
+            console.error('載入訂單詳情失敗:', error);
+            showError('載入訂單詳情失敗');
+        }
+    }
+
+    // 顯示訂單成功頁面
+    function displayOrderSuccess() {
+        if (!orderDetails) {
+            showError('訂單資料無效');
+            return;
+        }
+
+        const subtotal = orderDetails.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        const tax = subtotal * 0.1;
+        const total = subtotal + tax;
+
+        document.getElementById('successContainer').innerHTML = `
+            <div class="success-header">
+                <div class="success-icon">✓</div>
+                <h1 class="success-title">訂單提交成功！</h1>
+                <p class="success-message">
+                    感謝您的購買！我們已收到您的訂單，將盡快為您處理。<br>
+                    訂單編號：<strong>#${orderDetails.id}</strong>
+                </p>
+            </div>
+
+            <div class="order-details">
+                <h3>訂單詳情</h3>
+                <div class="detail-row">
+                    <span class="detail-label">訂單編號:</span>
+                    <span class="detail-value">#${orderDetails.id}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">訂單日期:</span>
+                    <span class="detail-value">${new Date(orderDetails.order_date).toLocaleDateString('zh-TW')}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">客戶姓名:</span>
+                    <span class="detail-value">${orderDetails.customer.first_name} ${orderDetails.customer.last_name}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">電子郵件:</span>
+                    <span class="detail-value">${orderDetails.customer.email}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">電話號碼:</span>
+                    <span class="detail-value">${orderDetails.customer.phone}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">送貨地址:</span>
+                    <span class="detail-value">${orderDetails.customer.address}, ${orderDetails.customer.city}</span>
+                </div>
+                ${orderDetails.delivery_method ? `
+                <div class="detail-row">
+                    <span class="detail-label">取貨方式:</span>
+                    <span class="detail-value">${getDeliveryMethodText(orderDetails.delivery_method)}</span>
+                </div>
+                ` : ''}
+                ${orderDetails.delivery_method === '711_store' && orderDetails.store_name ? `
+                <div class="store-info">
+                    <div class="detail-row">
+                        <span class="detail-label">🏪 取貨門市:</span>
+                        <span class="detail-value">${orderDetails.store_name}</span>
+                    </div>
+                    ${orderDetails.store_id ? `
+                    <div class="detail-row">
+                        <span class="detail-label">門市代碼:</span>
+                        <span class="detail-value">${orderDetails.store_id}</span>
+                    </div>
+                    ` : ''}
+                    ${orderDetails.store_address ? `
+                    <div class="detail-row">
+                        <span class="detail-label">門市地址:</span>
+                        <span class="detail-value">${orderDetails.store_address}</span>
+                    </div>
+                    ` : ''}
+                </div>
+                ` : ''}
+                <div class="detail-row">
+                    <span class="detail-label">付款方式:</span>
+                    <span class="detail-value">${getPaymentMethodText(orderDetails.payment_method)}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">訂單狀態:</span>
+                    <span class="detail-value">${getStatusText(orderDetails.status)}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">商品數量:</span>
+                    <span class="detail-value">${orderDetails.items.length} 項商品</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">小計:</span>
+                    <span class="detail-value">$${subtotal.toFixed(2)}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">稅費:</span>
+                    <span class="detail-value">$${tax.toFixed(2)}</span>
+                </div>
+                <div class="detail-row" style="border-top: 2px solid #dee2e6; font-weight: 600; font-size: 1.1rem;">
+                    <span class="detail-label">總計:</span>
+                    <span class="detail-value">$${total.toFixed(2)}</span>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <a href="/" class="btn btn-primary">繼續購物</a>
+                <button class="btn btn-secondary" onclick="printOrder()">列印訂單</button>
+            </div>
+        `;
+    }
+
+    // 獲取付款方式文字
+    function getPaymentMethodText(method) {
+        const methods = {
+            'credit_card': '信用卡',
+            'bank_transfer': '銀行轉帳',
+            'cash_on_delivery': '貨到付款'
+        };
+        return methods[method] || method;
+    }
+
+    // 獲取取貨方式文字
+    function getDeliveryMethodText(method) {
+        const methods = {
+            '711_store': '7-11店到店',
+            'home_delivery': '宅配到府',
+            'pickup': '自取'
+        };
+        return methods[method] || method;
+    }
+
+    // 獲取狀態文字
+    function getStatusText(status) {
+        const statuses = {
+            'pending': '處理中',
+            'confirmed': '已確認',
+            'shipped': '已出貨',
+            'delivered': '已送達',
+            'cancelled': '已取消'
+        };
+        return statuses[status] || status;
+    }
+
+    // 顯示錯誤
+    function showError(message) {
+        document.getElementById('successContainer').innerHTML = `
+            <div class="success-header">
+                <div class="success-icon" style="background: #dc3545;">✗</div>
+                <h1 class="success-title" style="color: #dc3545;">載入失敗</h1>
+                <p class="success-message">${message}</p>
+                <div class="action-buttons">
+                    <a href="/" class="btn btn-primary">返回首頁</a>
+                </div>
+            </div>
+        `;
+    }
+
+    // 列印訂單
+    function printOrder() {
+        window.print();
+    }
+
+    // 頁面載入時初始化
+    document.addEventListener('DOMContentLoaded', function() {
+        loadOrderDetails();
+    });
+</script>
+{% endblock %}

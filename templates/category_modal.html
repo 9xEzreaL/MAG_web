@@ -1,0 +1,188 @@
+<!-- 分類新增/編輯模態框 -->
+<div id="categoryModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 2rem; border-radius: 10px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h3 id="categoryModalTitle">新增分類</h3>
+            <button onclick="closeCategoryModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
+        </div>
+
+        <form id="categoryForm">
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">分類名稱 *</label>
+                <input type="text" id="categoryName" required style="width: 100%; padding: 0.75rem; border: 2px solid #e1e5e9; border-radius: 5px; font-size: 1rem;">
+            </div>
+
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">分類描述</label>
+                <textarea id="categoryDescription" rows="3" style="width: 100%; padding: 0.75rem; border: 2px solid #e1e5e9; border-radius: 5px; font-size: 1rem; resize: vertical;"></textarea>
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">分類圖片</label>
+                <input type="file" id="categoryImage" accept="image/*" style="width: 100%; padding: 0.5rem; border: 2px solid #e1e5e9; border-radius: 5px;">
+                <div id="categoryImagePreview" style="margin-top: 1rem; text-align: center;"></div>
+            </div>
+
+            <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                <button type="button" onclick="closeCategoryModal()" style="padding: 0.75rem 1.5rem; border: 2px solid #ddd; background: white; border-radius: 5px; cursor: pointer;">取消</button>
+                <button type="submit" id="categorySubmitBtn" style="padding: 0.75rem 1.5rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 5px; cursor: pointer;">儲存</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+let editingCategoryId = null;
+
+// 顯示新增分類模態框
+function showAddCategoryModal() {
+    editingCategoryId = null;
+    document.getElementById('categoryModalTitle').textContent = '新增分類';
+    document.getElementById('categoryForm').reset();
+    document.getElementById('categoryImagePreview').innerHTML = '';
+    document.getElementById('categoryModal').style.display = 'block';
+}
+
+// 顯示編輯分類模態框
+function editCategory(categoryId) {
+    const category = categories.find(c => c.id === categoryId);
+    if (!category) return;
+
+    editingCategoryId = categoryId;
+    document.getElementById('categoryModalTitle').textContent = '編輯分類';
+    document.getElementById('categoryName').value = category.name;
+    document.getElementById('categoryDescription').value = category.description || '';
+    
+    // 顯示現有圖片
+    if (category.image_url) {
+        document.getElementById('categoryImagePreview').innerHTML = `
+            <img src="${category.image_url}" alt="分類圖片" style="max-width: 200px; max-height: 200px; border-radius: 5px;">
+            <p style="margin-top: 0.5rem; color: #666;">目前圖片</p>
+        `;
+    } else {
+        document.getElementById('categoryImagePreview').innerHTML = '';
+    }
+    
+    document.getElementById('categoryModal').style.display = 'block';
+}
+
+// 關閉分類模態框
+function closeCategoryModal() {
+    document.getElementById('categoryModal').style.display = 'none';
+    editingCategoryId = null;
+}
+
+// 圖片預覽
+document.getElementById('categoryImage').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('categoryImagePreview').innerHTML = `
+                <img src="${e.target.result}" alt="預覽圖片" style="max-width: 200px; max-height: 200px; border-radius: 5px;">
+                <p style="margin-top: 0.5rem; color: #666;">預覽圖片</p>
+            `;
+        };
+        reader.readAsDataURL(file);
+    }
+});
+
+// 分類表單提交
+document.getElementById('categoryForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const submitBtn = document.getElementById('categorySubmitBtn');
+    const originalText = submitBtn.textContent;
+    submitBtn.disabled = true;
+    submitBtn.textContent = '儲存中...';
+    
+    try {
+        let imageUrl = '';
+        
+        // 如果有選擇新圖片，先上傳
+        const imageFile = document.getElementById('categoryImage').files[0];
+        if (imageFile) {
+            const formData = new FormData();
+            formData.append('file', imageFile);
+            
+            const uploadResponse = await fetch(`${API_BASE}/upload/category`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+                },
+                body: formData
+            });
+            
+            if (uploadResponse.ok) {
+                const uploadData = await uploadResponse.json();
+                imageUrl = uploadData.image_url;
+            } else {
+                throw new Error('圖片上傳失敗');
+            }
+        } else if (editingCategoryId) {
+            // 編輯時如果沒有選擇新圖片，保持原圖片
+            const category = categories.find(c => c.id === editingCategoryId);
+            imageUrl = category.image_url || '';
+        }
+        
+        // 提交分類資料
+        const categoryData = {
+            name: document.getElementById('categoryName').value,
+            description: document.getElementById('categoryDescription').value,
+            image_url: imageUrl
+        };
+        
+        const url = editingCategoryId ? 
+            `${API_BASE}/categories/${editingCategoryId}` : 
+            `${API_BASE}/categories`;
+        const method = editingCategoryId ? 'PUT' : 'POST';
+        
+        const response = await fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+            },
+            body: JSON.stringify(categoryData)
+        });
+        
+        if (response.ok) {
+            closeCategoryModal();
+            loadCategories();
+            loadStats(); // 更新統計資料
+        } else {
+            const errorData = await response.json();
+            alert('操作失敗: ' + (errorData.error || '未知錯誤'));
+        }
+    } catch (error) {
+        alert('操作失敗: ' + error.message);
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+    }
+});
+
+// 刪除分類
+async function deleteCategory(categoryId) {
+    if (!confirm('確定要刪除這個分類嗎？')) return;
+    
+    try {
+        const response = await fetch(`${API_BASE}/categories/${categoryId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+            }
+        });
+        
+        if (response.ok) {
+            loadCategories();
+            loadStats();
+        } else {
+            const errorData = await response.json();
+            alert('刪除失敗: ' + (errorData.error || '未知錯誤'));
+        }
+    } catch (error) {
+        alert('刪除失敗: ' + error.message);
+    }
+}
+</script>

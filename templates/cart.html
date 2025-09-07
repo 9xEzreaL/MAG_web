@@ -1,0 +1,505 @@
+{% extends "base.html" %}
+
+{% block title %}購物車 - 購物網站{% endblock %}
+
+{% block extra_css %}
+<style>
+    .cart-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .cart-header {
+        background: white;
+        padding: 2rem;
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+
+    .cart-header h1 {
+        font-size: 2.5rem;
+        color: #333;
+        margin-bottom: 1rem;
+    }
+
+    .cart-content {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        padding: 2rem;
+    }
+
+    .cart-items {
+        margin-bottom: 2rem;
+    }
+
+    .cart-item {
+        display: grid;
+        grid-template-columns: 120px 1fr auto auto auto;
+        gap: 1.5rem;
+        align-items: center;
+        padding: 1.5rem 0;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .cart-item:last-child {
+        border-bottom: none;
+    }
+
+    .item-image {
+        width: 100px;
+        height: 100px;
+        object-fit: contain;
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 0.5rem;
+    }
+
+    .item-details h3 {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 0.5rem;
+    }
+
+    .item-details p {
+        color: #666;
+        font-size: 0.95rem;
+        line-height: 1.4;
+    }
+
+    .item-price {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #007bff;
+        text-align: center;
+    }
+
+    .quantity-controls {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .quantity-btn {
+        width: 35px;
+        height: 35px;
+        border: 2px solid #007bff;
+        background: white;
+        color: #007bff;
+        border-radius: 50%;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .quantity-btn:hover {
+        background: #007bff;
+        color: white;
+    }
+
+    .quantity-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .quantity-input {
+        width: 60px;
+        text-align: center;
+        font-size: 1rem;
+        font-weight: 600;
+        border: 2px solid #e9ecef;
+        border-radius: 5px;
+        padding: 0.5rem;
+    }
+
+    .remove-btn {
+        background: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .remove-btn:hover {
+        background: #c82333;
+    }
+
+    .cart-summary {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 2rem;
+        margin-top: 2rem;
+    }
+
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        font-size: 1.1rem;
+    }
+
+    .summary-row.total {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #333;
+        border-top: 2px solid #dee2e6;
+        padding-top: 1rem;
+        margin-top: 1rem;
+    }
+
+    .checkout-btn {
+        width: 100%;
+        padding: 1rem 2rem;
+        background: #28a745;
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 1.2rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 1.5rem;
+    }
+
+    .checkout-btn:hover {
+        background: #218838;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(40,167,69,0.3);
+    }
+
+    .checkout-btn:disabled {
+        background: #6c757d;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+
+    .empty-cart {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: #666;
+    }
+
+    .empty-cart h3 {
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+        color: #333;
+    }
+
+    .empty-cart p {
+        margin-bottom: 2rem;
+    }
+
+    .continue-shopping-btn {
+        display: inline-block;
+        padding: 1rem 2rem;
+        background: #007bff;
+        color: white;
+        text-decoration: none;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .continue-shopping-btn:hover {
+        background: #0056b3;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,123,255,0.3);
+    }
+
+    .loading-cart {
+        text-align: center;
+        padding: 4rem 2rem;
+    }
+
+    .loading-spinner {
+        display: inline-block;
+        width: 40px;
+        height: 40px;
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #007bff;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    /* 響應式設計 */
+    @media (max-width: 768px) {
+        .cart-container {
+            padding: 1rem;
+        }
+
+        .cart-item {
+            grid-template-columns: 80px 1fr;
+            gap: 1rem;
+        }
+
+        .item-image {
+            width: 70px;
+            height: 70px;
+        }
+
+        .item-details h3 {
+            font-size: 1.1rem;
+        }
+
+        .item-price {
+            font-size: 1.1rem;
+        }
+
+        .quantity-controls {
+            margin: 1rem 0;
+        }
+
+        .remove-btn {
+            margin-top: 1rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .cart-item {
+            grid-template-columns: 1fr;
+            text-align: center;
+        }
+
+        .item-image {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="cart-container">
+    <div class="cart-header">
+        <h1>購物車</h1>
+        <p>查看您的商品並進行結帳</p>
+    </div>
+
+    <div class="cart-content">
+        <div id="cartContainer">
+            <div class="loading-cart">
+                <div class="loading-spinner"></div>
+                <p>載入購物車中...</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let cartItems = [];
+
+    // 從本地存儲載入購物車
+    function loadCartFromStorage() {
+        const cartData = localStorage.getItem('shopping_cart');
+        if (cartData) {
+            try {
+                cartItems = JSON.parse(cartData);
+            } catch (error) {
+                console.error('載入購物車失敗:', error);
+                cartItems = [];
+            }
+        }
+        updateCartDisplay();
+        updateCartIcon();
+    }
+
+    // 保存購物車到本地存儲
+    function saveCartToStorage() {
+        localStorage.setItem('shopping_cart', JSON.stringify(cartItems));
+        updateCartIcon();
+    }
+
+    // 更新購物車顯示
+    function updateCartDisplay() {
+        const container = document.getElementById('cartContainer');
+        
+        if (cartItems.length === 0) {
+            container.innerHTML = `
+                <div class="empty-cart">
+                    <h3>購物車是空的</h3>
+                    <p>您還沒有添加任何商品到購物車</p>
+                    <a href="/" class="continue-shopping-btn">繼續購物</a>
+                </div>
+            `;
+            return;
+        }
+
+        // 計算總價
+        const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        const tax = subtotal * 0.1; // 10% 稅
+        const total = subtotal + tax;
+
+        container.innerHTML = `
+            <div class="cart-items">
+                ${cartItems.map((item, index) => `
+                    <div class="cart-item">
+                        <img src="${item.image_url || '/uploads/placeholder.jpg'}" 
+                             alt="${item.name}" 
+                             class="item-image"
+                             onerror="this.src='/uploads/placeholder.jpg'">
+                        <div class="item-details">
+                            <h3>${item.name}</h3>
+                            <p>${item.description || '沒有描述'}</p>
+                        </div>
+                        <div class="item-price">$${item.price}</div>
+                        <div class="quantity-controls">
+                            <button class="quantity-btn" onclick="updateQuantity(${index}, -1)">-</button>
+                            <input type="number" class="quantity-input" 
+                                   value="${item.quantity}" 
+                                   min="1" 
+                                   max="${item.quantity_left}"
+                                   onchange="setQuantity(${index}, this.value)">
+                            <button class="quantity-btn" onclick="updateQuantity(${index}, 1)">+</button>
+                        </div>
+                        <button class="remove-btn" onclick="removeItem(${index})">移除</button>
+                    </div>
+                `).join('')}
+            </div>
+            
+            <div class="cart-summary">
+                <div class="summary-row">
+                    <span>小計:</span>
+                    <span>$${subtotal.toFixed(2)}</span>
+                </div>
+                <div class="summary-row">
+                    <span>稅費 (10%):</span>
+                    <span>$${tax.toFixed(2)}</span>
+                </div>
+                <div class="summary-row total">
+                    <span>總計:</span>
+                    <span>$${total.toFixed(2)}</span>
+                </div>
+                <button class="checkout-btn" onclick="checkout()">
+                    結帳
+                </button>
+            </div>
+        `;
+    }
+
+    // 更新商品數量
+    function updateQuantity(index, delta) {
+        const item = cartItems[index];
+        const newQuantity = item.quantity + delta;
+        
+        if (newQuantity < 1) {
+            removeItem(index);
+            return;
+        }
+        
+        if (newQuantity > item.quantity_left) {
+            alert(`庫存不足！最多只能購買 ${item.quantity_left} 個`);
+            return;
+        }
+        
+        item.quantity = newQuantity;
+        saveCartToStorage();
+        updateCartDisplay();
+    }
+
+    // 設置商品數量
+    function setQuantity(index, quantity) {
+        const item = cartItems[index];
+        const newQuantity = parseInt(quantity);
+        
+        if (newQuantity < 1) {
+            removeItem(index);
+            return;
+        }
+        
+        if (newQuantity > item.quantity_left) {
+            alert(`庫存不足！最多只能購買 ${item.quantity_left} 個`);
+            item.quantity = item.quantity_left;
+        } else {
+            item.quantity = newQuantity;
+        }
+        
+        saveCartToStorage();
+        updateCartDisplay();
+    }
+
+    // 移除商品
+    function removeItem(index) {
+        if (confirm('確定要移除這個商品嗎？')) {
+            cartItems.splice(index, 1);
+            saveCartToStorage();
+            updateCartDisplay();
+        }
+    }
+
+    // 結帳
+    function checkout() {
+        if (cartItems.length === 0) {
+            alert('購物車是空的！');
+            return;
+        }
+        
+        // 跳轉到結帳頁面
+        window.location.href = '/checkout';
+    }
+
+    // 更新購物車圖標
+    function updateCartIcon() {
+        const cartIcon = document.querySelector('.cart-icon');
+        if (cartIcon) {
+            const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+            if (totalItems > 0) {
+                cartIcon.style.position = 'relative';
+                cartIcon.setAttribute('data-count', totalItems);
+                
+                // 添加數量標記
+                let badge = cartIcon.querySelector('.cart-badge');
+                if (!badge) {
+                    badge = document.createElement('span');
+                    badge.className = 'cart-badge';
+                    badge.style.cssText = `
+                        position: absolute;
+                        top: -8px;
+                        right: -8px;
+                        background: #dc3545;
+                        color: white;
+                        border-radius: 50%;
+                        width: 20px;
+                        height: 20px;
+                        font-size: 12px;
+                        font-weight: bold;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    `;
+                    cartIcon.appendChild(badge);
+                }
+                badge.textContent = totalItems;
+            } else {
+                cartIcon.removeAttribute('data-count');
+                const badge = cartIcon.querySelector('.cart-badge');
+                if (badge) {
+                    badge.remove();
+                }
+            }
+        }
+    }
+
+    // 頁面載入時初始化
+    document.addEventListener('DOMContentLoaded', function() {
+        loadCartFromStorage();
+    });
+</script>
+{% endblock %}

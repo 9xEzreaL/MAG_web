@@ -1,0 +1,1438 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>後台管理 - 購物網站</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+        }
+
+        .header {
+            background: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 1.5rem;
+        }
+
+        .header .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logout-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .logout-btn:hover {
+            background: #c82333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .dashboard-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: transform 0.2s ease;
+        }
+
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .dashboard-card h3 {
+            color: #333;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+
+        .dashboard-card p {
+            color: #666;
+            margin-bottom: 1.5rem;
+        }
+
+        .dashboard-card .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 0.9rem;
+            transition: transform 0.2s ease;
+        }
+
+        .dashboard-card .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .stat-card h4 {
+            color: #333;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-card p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .nav-tabs {
+            display: flex;
+            background: white;
+            border-radius: 10px 10px 0 0;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .nav-tab {
+            flex: 1;
+            padding: 1rem;
+            background: #f8f9fa;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.2s ease;
+        }
+
+        .nav-tab.active {
+            background: white;
+            color: #667eea;
+            font-weight: 500;
+        }
+
+        .tab-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 0 0 10px 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            min-height: 400px;
+        }
+
+        .tab-pane {
+            display: none;
+        }
+
+        .tab-pane.active {
+            display: block;
+        }
+
+        .loading {
+            text-align: center;
+            color: #666;
+            padding: 2rem;
+        }
+
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 1rem;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+            border: 1px solid #fcc;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 1rem;
+            }
+            
+            .header {
+                padding: 1rem;
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .order-filters {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .order-filters input[type="date"] {
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 2rem;
+            padding: 1rem;
+        }
+        
+        .pagination button {
+            padding: 0.5rem 1rem;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .pagination button:hover {
+            background: #f8f9fa;
+        }
+        
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .pagination .current-page {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+        
+        .pagination-info {
+            margin: 0 1rem;
+            color: #666;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>購物網站後台管理</h1>
+        <div class="user-info">
+            <span>歡迎，<span id="adminUsername"></span></span>
+            <button class="logout-btn" onclick="logout()">登出</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- 統計卡片 -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h4 id="totalCategories">-</h4>
+                <p>商品分類</p>
+            </div>
+            <div class="stat-card">
+                <h4 id="totalProducts">-</h4>
+                <p>商品總數</p>
+            </div>
+            <div class="stat-card">
+                <h4 id="totalOrders">-</h4>
+                <p>訂單總數</p>
+            </div>
+            <div class="stat-card">
+                <h4 id="activeProducts">-</h4>
+                <p>上架商品</p>
+            </div>
+        </div>
+
+        <!-- 功能卡片 -->
+        <div class="dashboard-grid">
+            <div class="dashboard-card">
+                <h3>分類管理</h3>
+                <p>管理商品分類，新增、編輯分類資訊</p>
+                <button class="btn" onclick="showTab('categories')">管理分類</button>
+            </div>
+            <div class="dashboard-card">
+                <h3>商品管理</h3>
+                <p>管理商品資訊，庫存和上架狀態</p>
+                <button class="btn" onclick="showTab('products')">管理商品</button>
+            </div>
+            <div class="dashboard-card">
+                <h3>訂單管理</h3>
+                <p>查看和管理所有訂單記錄</p>
+                <button class="btn" onclick="showTab('orders')">查看訂單</button>
+            </div>
+        </div>
+
+        <!-- 標籤頁內容 -->
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showTab('categories')">分類管理</button>
+            <button class="nav-tab" onclick="showTab('products')">商品管理</button>
+            <button class="nav-tab" onclick="showTab('orders')">訂單管理</button>
+        </div>
+
+        <div class="tab-content">
+            <!-- 分類管理 -->
+            <div id="categories" class="tab-pane active">
+                <div class="loading" id="categoriesLoading">載入中...</div>
+                <div id="categoriesContent" style="display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h3>商品分類管理</h3>
+                        <button class="btn" onclick="showAddCategoryModal()">新增分類</button>
+                    </div>
+                    <div id="categoriesList"></div>
+                </div>
+            </div>
+
+            <!-- 商品管理 -->
+            <div id="products" class="tab-pane">
+                <div class="loading" id="productsLoading">載入中...</div>
+                <div id="productsContent" style="display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h3>商品管理</h3>
+                        <button class="btn" onclick="showAddProductModal()">新增商品</button>
+                    </div>
+                    <div id="productsList"></div>
+                </div>
+            </div>
+
+            <!-- 訂單管理 -->
+            <div id="orders" class="tab-pane">
+                <div class="loading" id="ordersLoading">載入中...</div>
+                <div id="ordersContent" style="display: none;">
+                    <div class="section-header">
+                        <h3>訂單管理</h3>
+                        <div class="order-filters">
+                            <input type="text" id="orderIdSearch" placeholder="訂單號" style="width: 120px;">
+                            <select id="statusFilter" style="width: 120px;">
+                                <option value="">全部狀態</option>
+                                <option value="pending">待處理</option>
+                                <option value="confirmed">已確認</option>
+                                <option value="shipped">已出貨</option>
+                                <option value="delivered">已送達</option>
+                                <option value="cancelled">已取消</option>
+                            </select>
+                            <input type="date" id="startDate" placeholder="開始日期">
+                            <input type="date" id="endDate" placeholder="結束日期">
+                            <button class="btn" onclick="searchOrders()">搜尋</button>
+                            <button class="btn" onclick="clearOrderFilters()">清除</button>
+                            <button class="btn" onclick="loadOrders()">重新載入</button>
+                        </div>
+                    </div>
+                    <div id="ordersList"></div>
+                    <div id="ordersPagination" class="pagination"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 包含所有模態框 -->
+    <div id="modals">
+        <!-- 分類管理模態框 -->
+        <div id="categoryModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 2rem; border-radius: 10px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h3 id="categoryModalTitle">新增分類</h3>
+                    <button onclick="closeCategoryModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
+                </div>
+
+                <form id="categoryForm">
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">分類名稱 *</label>
+                        <input type="text" id="categoryName" required style="width: 100%; padding: 0.75rem; border: 2px solid #e1e5e9; border-radius: 5px; font-size: 1rem;">
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">分類描述</label>
+                        <textarea id="categoryDescription" rows="3" style="width: 100%; padding: 0.75rem; border: 2px solid #e1e5e9; border-radius: 5px; font-size: 1rem; resize: vertical;"></textarea>
+                    </div>
+
+                    <div style="margin-bottom: 1.5rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">分類圖片</label>
+                        <input type="file" id="categoryImage" accept="image/*" style="width: 100%; padding: 0.5rem; border: 2px solid #e1e5e9; border-radius: 5px;">
+                        <div id="categoryImagePreview" style="margin-top: 1rem; text-align: center;"></div>
+                    </div>
+
+                    <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                        <button type="button" onclick="closeCategoryModal()" style="padding: 0.75rem 1.5rem; border: 2px solid #ddd; background: white; border-radius: 5px; cursor: pointer;">取消</button>
+                        <button type="submit" id="categorySubmitBtn" style="padding: 0.75rem 1.5rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 5px; cursor: pointer;">儲存</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 商品管理模態框 -->
+        <div id="productModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 2rem; border-radius: 10px; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h3 id="productModalTitle">新增商品</h3>
+                    <button onclick="closeProductModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
+                </div>
+
+                <form id="productForm">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">商品名稱 *</label>
+                            <input type="text" id="productName" required style="width: 100%; padding: 0.75rem; border: 2px solid #e1e5e9; border-radius: 5px; font-size: 1rem;">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">商品分類 *</label>
+                            <select id="productCategory" required style="width: 100%; padding: 0.75rem; border: 2px solid #e1e5e9; border-radius: 5px; font-size: 1rem;">
+                                <option value="">請選擇分類</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">商品描述</label>
+                        <textarea id="productDescription" rows="3" style="width: 100%; padding: 0.75rem; border: 2px solid #e1e5e9; border-radius: 5px; font-size: 1rem; resize: vertical;"></textarea>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">價格 *</label>
+                            <input type="number" id="productPrice" step="0.01" min="0" required style="width: 100%; padding: 0.75rem; border: 2px solid #e1e5e9; border-radius: 5px; font-size: 1rem;">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">庫存數量 *</label>
+                            <input type="number" id="productQuantity" min="0" required style="width: 100%; padding: 0.75rem; border: 2px solid #e1e5e9; border-radius: 5px; font-size: 1rem;">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">上架狀態</label>
+                            <select id="productStatus" style="width: 100%; padding: 0.75rem; border: 2px solid #e1e5e9; border-radius: 5px; font-size: 1rem;">
+                                <option value="true">上架</option>
+                                <option value="false">下架</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 1.5rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">商品圖片</label>
+                        <input type="file" id="productImage" accept="image/*" style="width: 100%; padding: 0.5rem; border: 2px solid #e1e5e9; border-radius: 5px;">
+                        <div id="productImagePreview" style="margin-top: 1rem; text-align: center;"></div>
+                    </div>
+
+                    <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                        <button type="button" onclick="closeProductModal()" style="padding: 0.75rem 1.5rem; border: 2px solid #ddd; background: white; border-radius: 5px; cursor: pointer;">取消</button>
+                        <button type="submit" id="productSubmitBtn" style="padding: 0.75rem 1.5rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 5px; cursor: pointer;">儲存</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 訂單詳情模態框 -->
+        <div id="orderModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 2rem; border-radius: 10px; width: 90%; max-width: 800px; max-height: 90vh; overflow-y: auto;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h3 id="orderModalTitle">訂單詳情</h3>
+                    <button onclick="closeOrderModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
+                </div>
+
+                <div id="orderDetails">
+                    <!-- 訂單詳情內容將在這裡動態載入 -->
+                </div>
+
+                <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem;">
+                    <button onclick="closeOrderModal()" style="padding: 0.75rem 1.5rem; border: 2px solid #ddd; background: white; border-radius: 5px; cursor: pointer;">關閉</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000/api';
+        let currentTab = 'categories';
+        let categories = [];
+        let products = [];
+        let orders = [];
+        let currentPage = 1;
+        let totalPages = 1;
+        let currentFilters = {};
+
+        // 檢查登入狀態
+        function checkAuth() {
+            const token = localStorage.getItem('adminToken');
+            if (!token) {
+                window.location.href = '/admin';
+                return false;
+            }
+            return true;
+        }
+
+        // 登出
+        function logout() {
+            localStorage.removeItem('adminToken');
+            localStorage.removeItem('adminUsername');
+            window.location.href = '/admin';
+        }
+
+        // 顯示管理員名稱
+        function showAdminName() {
+            const username = localStorage.getItem('adminUsername');
+            if (username) {
+                document.getElementById('adminUsername').textContent = username;
+            }
+        }
+
+        // 切換標籤頁
+        function showTab(tabName) {
+            // 隱藏所有標籤頁
+            document.querySelectorAll('.tab-pane').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // 顯示選中的標籤頁
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+            currentTab = tabName;
+
+            // 載入對應的資料
+            switch(tabName) {
+                case 'categories':
+                    loadCategories();
+                    break;
+                case 'products':
+                    loadProducts();
+                    break;
+                case 'orders':
+                    loadOrders();
+                    break;
+            }
+        }
+
+        // 載入統計資料
+        async function loadStats() {
+            try {
+                const [categoriesRes, productsRes, ordersRes] = await Promise.all([
+                    fetch(`${API_BASE}/categories`),
+                    fetch(`${API_BASE}/items`),
+                    fetch(`${API_BASE}/orders`, {
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+                        }
+                    })
+                ]);
+
+                const categoriesData = await categoriesRes.json();
+                const productsData = await productsRes.json();
+                const ordersData = await ordersRes.json();
+
+                // 調試信息
+                console.log('統計資料載入結果:');
+                console.log('categoriesData:', categoriesData);
+                console.log('productsData:', productsData);
+                console.log('ordersData:', ordersData);
+
+                document.getElementById('totalCategories').textContent = categoriesData.length;
+                document.getElementById('totalProducts').textContent = productsData.length;
+                // 修復：ordersData 是包含 orders 和 pagination 的物件，不是直接陣列
+                const totalOrders = ordersData.pagination ? ordersData.pagination.total : ordersData.orders ? ordersData.orders.length : 0;
+                document.getElementById('totalOrders').textContent = totalOrders;
+                document.getElementById('activeProducts').textContent = productsData.filter(p => p.is_active).length;
+                
+                console.log('顯示的統計數字:');
+                console.log('總分類數:', categoriesData.length);
+                console.log('總商品數:', productsData.length);
+                console.log('總訂單數:', totalOrders);
+                console.log('上架商品數:', productsData.filter(p => p.is_active).length);
+            } catch (error) {
+                console.error('載入統計資料失敗:', error);
+            }
+        }
+
+        // 載入分類資料
+        async function loadCategories() {
+            const loading = document.getElementById('categoriesLoading');
+            const content = document.getElementById('categoriesContent');
+            
+            loading.style.display = 'block';
+            content.style.display = 'none';
+
+            try {
+                const response = await fetch(`${API_BASE}/categories`);
+                categories = await response.json();
+                
+                displayCategories();
+                loading.style.display = 'none';
+                content.style.display = 'block';
+            } catch (error) {
+                loading.innerHTML = '<div class="error">載入分類失敗</div>';
+            }
+        }
+
+        // 顯示分類列表
+        function displayCategories() {
+            const container = document.getElementById('categoriesList');
+            
+            if (categories.length === 0) {
+                container.innerHTML = '<p>尚無分類資料</p>';
+                return;
+            }
+
+            container.innerHTML = categories.map(category => `
+                <div style="border: 1px solid #ddd; border-radius: 5px; padding: 1rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h4>${category.name}</h4>
+                        <p>${category.description || '無描述'}</p>
+                        <small>商品數量: ${category.item_count}</small>
+                    </div>
+                    <div>
+                        <button class="btn" onclick="editCategory(${category.id})" style="margin-right: 0.5rem;">編輯</button>
+                        <button class="btn" onclick="deleteCategory(${category.id})" style="background: #dc3545;">刪除</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 載入商品資料
+        async function loadProducts() {
+            const loading = document.getElementById('productsLoading');
+            const content = document.getElementById('productsContent');
+            
+            loading.style.display = 'block';
+            content.style.display = 'none';
+
+            try {
+                const response = await fetch(`${API_BASE}/items`);
+                products = await response.json();
+                
+                displayProducts();
+                loading.style.display = 'none';
+                content.style.display = 'block';
+            } catch (error) {
+                loading.innerHTML = '<div class="error">載入商品失敗</div>';
+            }
+        }
+
+        // 顯示商品列表
+        function displayProducts() {
+            const container = document.getElementById('productsList');
+            
+            if (products.length === 0) {
+                container.innerHTML = '<p>尚無商品資料</p>';
+                return;
+            }
+
+            container.innerHTML = products.map(product => `
+                <div style="border: 1px solid #ddd; border-radius: 5px; padding: 1rem; margin-bottom: 1rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <h4>${product.name}</h4>
+                            <p>分類: ${product.category.name}</p>
+                            <p>價格: $${product.price}</p>
+                            <p>庫存: ${product.quantity_left}</p>
+                            <p>狀態: ${product.is_active ? '上架' : '下架'}</p>
+                        </div>
+                        <div>
+                            <button class="btn" onclick="editProduct(${product.id})" style="margin-right: 0.5rem;">編輯</button>
+                            <button class="btn" onclick="toggleProductStatus(${product.id}, ${product.is_active})" style="background: ${product.is_active ? '#dc3545' : '#28a745'};">
+                                ${product.is_active ? '下架' : '上架'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 載入訂單資料
+        async function loadOrders(page = 1) {
+            const loading = document.getElementById('ordersLoading');
+            const content = document.getElementById('ordersContent');
+            
+            loading.style.display = 'block';
+            content.style.display = 'none';
+
+            try {
+                const token = localStorage.getItem('adminToken');
+                
+                // 構建查詢參數
+                const params = new URLSearchParams({
+                    page: page,
+                    per_page: 20
+                });
+                
+                // 添加搜尋篩選
+                if (currentFilters.order_id) {
+                    params.append('order_id', currentFilters.order_id);
+                }
+                if (currentFilters.status) {
+                    params.append('status', currentFilters.status);
+                }
+                if (currentFilters.startDate) {
+                    params.append('start_date', currentFilters.startDate);
+                }
+                if (currentFilters.endDate) {
+                    params.append('end_date', currentFilters.endDate);
+                }
+                
+                // 決定使用哪個API端點
+                const hasSearchFilters = currentFilters.order_id || currentFilters.status;
+                const apiEndpoint = hasSearchFilters ? `${API_BASE}/orders/search` : `${API_BASE}/orders`;
+                
+                const response = await fetch(`${apiEndpoint}?${params}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `HTTP ${response.status}`);
+                }
+                
+                const data = await response.json();
+                orders = data.orders;
+                currentPage = data.pagination.page;
+                totalPages = data.pagination.pages;
+                
+                // 調試信息
+                console.log('訂單數據:', data);
+                console.log('分頁資訊:', data.pagination);
+                
+                displayOrders();
+                displayPagination(data.pagination);
+                loading.style.display = 'none';
+                content.style.display = 'block';
+            } catch (error) {
+                console.error('Load orders error:', error);
+                loading.innerHTML = `<div class="error">載入訂單失敗: ${error.message}</div>`;
+            }
+        }
+
+        // 顯示訂單列表
+        function displayOrders() {
+            const container = document.getElementById('ordersList');
+            
+            if (orders.length === 0) {
+                container.innerHTML = '<p>尚無訂單資料</p>';
+                return;
+            }
+
+            container.innerHTML = orders.map(order => `
+                <div style="border: 1px solid #ddd; border-radius: 5px; padding: 1rem; margin-bottom: 1rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <h4>訂單 #${order.id}</h4>
+                            <p>客戶: ${order.customer_name}</p>
+                            <p>郵箱: ${order.customer_email || 'N/A'}</p>
+                            <p>總金額: $${order.total_amount}</p>
+                            <p>狀態: ${order.status}</p>
+                            <p>日期: ${new Date(order.order_date).toLocaleDateString()}</p>
+                            <p>商品數量: ${order.items_count}</p>
+                            ${order.delivery_method === '711_store' && order.store_name ? 
+                                `<p style="color: #007bff; font-weight: 500;">🏪 取貨門市: ${order.store_name}</p>` : 
+                                order.delivery_method ? 
+                                `<p>取貨方式: ${order.delivery_method}</p>` : 
+                                ''
+                            }
+                            ${order.payment_method ? `<p>付款方式: ${order.payment_method}</p>` : ''}
+                        </div>
+                        <div>
+                            <button class="btn" onclick="viewOrderDetails(${order.id})">查看詳情</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 顯示分頁
+        function displayPagination(pagination) {
+            const container = document.getElementById('ordersPagination');
+            
+            // 調試信息
+            console.log('顯示分頁資訊:', pagination);
+            
+            // 即使只有一頁，也要顯示訂單總數資訊
+            if (pagination.pages <= 1) {
+                container.innerHTML = `<div class="pagination-info">
+                    第 ${pagination.page} 頁，共 ${pagination.pages} 頁，總計 ${pagination.total} 筆訂單
+                </div>`;
+                console.log('顯示單頁分頁資訊');
+                return;
+            }
+            
+            let paginationHTML = '';
+            
+            // 上一頁按鈕
+            if (pagination.has_prev) {
+                paginationHTML += `<button onclick="loadOrders(${pagination.page - 1})">上一頁</button>`;
+            } else {
+                paginationHTML += `<button disabled>上一頁</button>`;
+            }
+            
+            // 頁碼
+            const startPage = Math.max(1, pagination.page - 2);
+            const endPage = Math.min(pagination.pages, pagination.page + 2);
+            
+            if (startPage > 1) {
+                paginationHTML += `<button onclick="loadOrders(1)">1</button>`;
+                if (startPage > 2) {
+                    paginationHTML += `<span>...</span>`;
+                }
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                if (i === pagination.page) {
+                    paginationHTML += `<button class="current-page">${i}</button>`;
+                } else {
+                    paginationHTML += `<button onclick="loadOrders(${i})">${i}</button>`;
+                }
+            }
+            
+            if (endPage < pagination.pages) {
+                if (endPage < pagination.pages - 1) {
+                    paginationHTML += `<span>...</span>`;
+                }
+                paginationHTML += `<button onclick="loadOrders(${pagination.pages})">${pagination.pages}</button>`;
+            }
+            
+            // 下一頁按鈕
+            if (pagination.has_next) {
+                paginationHTML += `<button onclick="loadOrders(${pagination.page + 1})">下一頁</button>`;
+            } else {
+                paginationHTML += `<button disabled>下一頁</button>`;
+            }
+            
+            // 分頁信息
+            paginationHTML += `<div class="pagination-info">
+                第 ${pagination.page} 頁，共 ${pagination.pages} 頁，總計 ${pagination.total} 筆訂單
+            </div>`;
+            
+            container.innerHTML = paginationHTML;
+        }
+
+        // 搜尋訂單
+        function searchOrders() {
+            const orderId = document.getElementById('orderIdSearch').value;
+            const status = document.getElementById('statusFilter').value;
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            
+            currentFilters = {
+                order_id: orderId || null,
+                status: status || null,
+                startDate: startDate || null,
+                endDate: endDate || null
+            };
+            
+            currentPage = 1;
+            loadOrders(1);
+        }
+
+        // 清除篩選
+        function clearOrderFilters() {
+            document.getElementById('orderIdSearch').value = '';
+            document.getElementById('statusFilter').value = '';
+            document.getElementById('startDate').value = '';
+            document.getElementById('endDate').value = '';
+            currentFilters = {};
+            currentPage = 1;
+            loadOrders(1);
+        }
+
+        // 初始化
+        function init() {
+            if (!checkAuth()) return;
+            
+            showAdminName();
+            loadStats();
+            loadCategories();
+        }
+
+        // 模態框功能
+        let editingCategoryId = null;
+        let editingProductId = null;
+
+        // 分類管理功能
+        function showAddCategoryModal() {
+            editingCategoryId = null;
+            document.getElementById('categoryModalTitle').textContent = '新增分類';
+            document.getElementById('categoryForm').reset();
+            document.getElementById('categoryImagePreview').innerHTML = '';
+            document.getElementById('categoryModal').style.display = 'block';
+        }
+
+        function editCategory(categoryId) {
+            const category = categories.find(c => c.id === categoryId);
+            if (!category) return;
+
+            editingCategoryId = categoryId;
+            document.getElementById('categoryModalTitle').textContent = '編輯分類';
+            document.getElementById('categoryName').value = category.name;
+            document.getElementById('categoryDescription').value = category.description || '';
+            
+            if (category.image_url) {
+                document.getElementById('categoryImagePreview').innerHTML = `
+                    <img src="${category.image_url}" alt="分類圖片" style="max-width: 200px; max-height: 200px; border-radius: 5px;">
+                    <p style="margin-top: 0.5rem; color: #666;">目前圖片</p>
+                `;
+            } else {
+                document.getElementById('categoryImagePreview').innerHTML = '';
+            }
+            
+            document.getElementById('categoryModal').style.display = 'block';
+        }
+
+        function closeCategoryModal() {
+            document.getElementById('categoryModal').style.display = 'none';
+            editingCategoryId = null;
+        }
+
+        // 商品管理功能
+        function showAddProductModal() {
+            editingProductId = null;
+            document.getElementById('productModalTitle').textContent = '新增商品';
+            document.getElementById('productForm').reset();
+            document.getElementById('productImagePreview').innerHTML = '';
+            loadCategoryOptions();
+            document.getElementById('productModal').style.display = 'block';
+        }
+
+        function editProduct(productId) {
+            const product = products.find(p => p.id === productId);
+            if (!product) return;
+
+            editingProductId = productId;
+            document.getElementById('productModalTitle').textContent = '編輯商品';
+            document.getElementById('productName').value = product.name;
+            document.getElementById('productDescription').value = product.description || '';
+            document.getElementById('productPrice').value = product.price;
+            document.getElementById('productQuantity').value = product.quantity_left;
+            document.getElementById('productStatus').value = product.is_active.toString();
+            
+            loadCategoryOptions(product.category_id);
+            
+            if (product.image_url) {
+                document.getElementById('productImagePreview').innerHTML = `
+                    <img src="${product.image_url}" alt="商品圖片" style="max-width: 200px; max-height: 200px; border-radius: 5px;">
+                    <p style="margin-top: 0.5rem; color: #666;">目前圖片</p>
+                `;
+            } else {
+                document.getElementById('productImagePreview').innerHTML = '';
+            }
+            
+            document.getElementById('productModal').style.display = 'block';
+        }
+
+        function closeProductModal() {
+            document.getElementById('productModal').style.display = 'none';
+            editingProductId = null;
+        }
+
+        function loadCategoryOptions(selectedId = null) {
+            const select = document.getElementById('productCategory');
+            select.innerHTML = '<option value="">請選擇分類</option>';
+            
+            categories.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category.id;
+                option.textContent = category.name;
+                if (selectedId && category.id === selectedId) {
+                    option.selected = true;
+                }
+                select.appendChild(option);
+            });
+        }
+
+        // 訂單管理功能
+        async function viewOrderDetails(orderId) {
+            try {
+                const response = await fetch(`${API_BASE}/orders/${orderId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const order = await response.json();
+                    displayOrderDetails(order);
+                    document.getElementById('orderModal').style.display = 'block';
+                } else {
+                    alert('載入訂單詳情失敗');
+                }
+            } catch (error) {
+                alert('載入訂單詳情失敗: ' + error.message);
+            }
+        }
+
+        function displayOrderDetails(order) {
+            const container = document.getElementById('orderDetails');
+            
+            container.innerHTML = `
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem;">
+                    <div>
+                        <h4 style="margin-bottom: 1rem; color: #333;">訂單資訊</h4>
+                        <div style="background: #f8f9fa; padding: 1rem; border-radius: 5px;">
+                            <p><strong>訂單編號:</strong> #${order.id}</p>
+                            <p><strong>訂單日期:</strong> ${new Date(order.order_date).toLocaleString()}</p>
+                            <p><strong>訂單狀態:</strong> 
+                                <span style="padding: 0.25rem 0.5rem; border-radius: 3px; font-size: 0.8rem; 
+                                             background: ${getStatusColor(order.status)}; color: white;">
+                                    ${getStatusText(order.status)}
+                                </span>
+                                <button onclick="showStatusUpdateModal(${order.id}, '${order.status}')" 
+                                        style="margin-left: 0.5rem; padding: 0.25rem 0.5rem; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 0.8rem;">
+                                    修改狀態
+                                </button>
+                            </p>
+                            <p><strong>總金額:</strong> $${order.total_amount}</p>
+                            ${order.delivery_method ? `<p><strong>取貨方式:</strong> ${order.delivery_method === '711_store' ? '7-11店到店' : order.delivery_method}</p>` : ''}
+                            ${order.payment_method ? `<p><strong>付款方式:</strong> ${order.payment_method === 'cash_on_delivery' ? '貨到付款' : order.payment_method}</p>` : ''}
+                        </div>
+                    </div>
+                    <div>
+                        <h4 style="margin-bottom: 1rem; color: #333;">客戶資訊</h4>
+                        <div style="background: #f8f9fa; padding: 1rem; border-radius: 5px;">
+                            <p><strong>姓名:</strong> ${order.customer.first_name} ${order.customer.last_name}</p>
+                            <p><strong>信箱:</strong> ${order.customer.email}</p>
+                            <p><strong>電話:</strong> ${order.customer.phone || '未提供'}</p>
+                            <p><strong>地址:</strong> ${order.customer.address || '未提供'}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                ${order.delivery_method === '711_store' && order.store_name ? `
+                <div style="margin-bottom: 2rem;">
+                    <h4 style="margin-bottom: 1rem; color: #333;">🏪 7-11門市資訊</h4>
+                    <div style="background: #e3f2fd; padding: 1rem; border-radius: 5px; border-left: 4px solid #2196f3;">
+                        <p><strong>門市名稱:</strong> ${order.store_name}</p>
+                        ${order.store_id ? `<p><strong>門市代碼:</strong> ${order.store_id}</p>` : ''}
+                        ${order.store_address ? `<p><strong>門市地址:</strong> ${order.store_address}</p>` : ''}
+                    </div>
+                </div>
+                ` : ''}
+                </div>
+                <div>
+                    <h4 style="margin-bottom: 1rem; color: #333;">商品清單</h4>
+                    <div style="background: #f8f9fa; padding: 1rem; border-radius: 5px;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="border-bottom: 2px solid #dee2e6;">
+                                    <th style="text-align: left; padding: 0.75rem; font-weight: 500;">商品名稱</th>
+                                    <th style="text-align: center; padding: 0.75rem; font-weight: 500;">數量</th>
+                                    <th style="text-align: right; padding: 0.75rem; font-weight: 500;">單價</th>
+                                    <th style="text-align: right; padding: 0.75rem; font-weight: 500;">小計</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${order.items.map(item => `
+                                    <tr style="border-bottom: 1px solid #dee2e6;">
+                                        <td style="padding: 0.75rem;">${item.item_name}</td>
+                                        <td style="text-align: center; padding: 0.75rem;">${item.quantity}</td>
+                                        <td style="text-align: right; padding: 0.75rem;">$${item.price}</td>
+                                        <td style="text-align: right; padding: 0.75rem; font-weight: 500;">$${(item.quantity * item.price).toFixed(2)}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                            <tfoot>
+                                <tr style="border-top: 2px solid #dee2e6; background: #e9ecef;">
+                                    <td colspan="3" style="text-align: right; padding: 0.75rem; font-weight: 500;">總計:</td>
+                                    <td style="text-align: right; padding: 0.75rem; font-weight: 500; font-size: 1.1rem;">$${order.total_amount}</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        function getStatusColor(status) {
+            switch(status) {
+                case 'pending': return '#ffc107';
+                case 'confirmed': return '#17a2b8';
+                case 'shipped': return '#007bff';
+                case 'delivered': return '#28a745';
+                case 'cancelled': return '#dc3545';
+                default: return '#6c757d';
+            }
+        }
+
+        function getStatusText(status) {
+            switch(status) {
+                case 'pending': return '待處理';
+                case 'confirmed': return '已確認';
+                case 'shipped': return '已出貨';
+                case 'delivered': return '已送達';
+                case 'cancelled': return '已取消';
+                default: return '未知';
+            }
+        }
+
+        function closeOrderModal() {
+            document.getElementById('orderModal').style.display = 'none';
+        }
+
+        // 表單提交處理
+        document.getElementById('categoryForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('categorySubmitBtn');
+            const originalText = submitBtn.textContent;
+            submitBtn.disabled = true;
+            submitBtn.textContent = '儲存中...';
+            
+            try {
+                let imageUrl = '';
+                
+                const imageFile = document.getElementById('categoryImage').files[0];
+                if (imageFile) {
+                    const formData = new FormData();
+                    formData.append('file', imageFile);
+                    
+                    const token = localStorage.getItem('adminToken');
+                    console.log('Upload token:', token); // 調試信息
+                    
+                    const uploadResponse = await fetch(`${API_BASE}/upload/category`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: formData
+                    });
+                    
+                    console.log('Upload response status:', uploadResponse.status); // 調試信息
+                    
+                    if (uploadResponse.ok) {
+                        const uploadData = await uploadResponse.json();
+                        imageUrl = uploadData.image_url;
+                    } else {
+                        const errorData = await uploadResponse.json();
+                        throw new Error(`圖片上傳失敗: ${errorData.error || '未知錯誤'}`);
+                    }
+                } else if (editingCategoryId) {
+                    const category = categories.find(c => c.id === editingCategoryId);
+                    imageUrl = category.image_url || '';
+                }
+                
+                const categoryData = {
+                    name: document.getElementById('categoryName').value,
+                    description: document.getElementById('categoryDescription').value,
+                    image_url: imageUrl
+                };
+                
+                const url = editingCategoryId ? 
+                    `${API_BASE}/categories/${editingCategoryId}` : 
+                    `${API_BASE}/categories`;
+                const method = editingCategoryId ? 'PUT' : 'POST';
+                
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+                    },
+                    body: JSON.stringify(categoryData)
+                });
+                
+                if (response.ok) {
+                    closeCategoryModal();
+                    loadCategories();
+                    loadStats();
+                } else {
+                    const errorData = await response.json();
+                    alert('操作失敗: ' + (errorData.error || '未知錯誤'));
+                }
+            } catch (error) {
+                alert('操作失敗: ' + error.message);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
+        });
+
+        document.getElementById('productForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('productSubmitBtn');
+            const originalText = submitBtn.textContent;
+            submitBtn.disabled = true;
+            submitBtn.textContent = '儲存中...';
+            
+            try {
+                let imageUrl = '';
+                
+                const imageFile = document.getElementById('productImage').files[0];
+                if (imageFile) {
+                    const formData = new FormData();
+                    formData.append('file', imageFile);
+                    
+                    const uploadResponse = await fetch(`${API_BASE}/upload/product`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+                        },
+                        body: formData
+                    });
+                    
+                    if (uploadResponse.ok) {
+                        const uploadData = await uploadResponse.json();
+                        imageUrl = uploadData.image_url;
+                    } else {
+                        throw new Error('圖片上傳失敗');
+                    }
+                } else if (editingProductId) {
+                    const product = products.find(p => p.id === editingProductId);
+                    imageUrl = product.image_url || '';
+                }
+                
+                const productData = {
+                    name: document.getElementById('productName').value,
+                    description: document.getElementById('productDescription').value,
+                    price: parseFloat(document.getElementById('productPrice').value),
+                    quantity_left: parseInt(document.getElementById('productQuantity').value),
+                    category_id: parseInt(document.getElementById('productCategory').value),
+                    image_url: imageUrl,
+                    is_active: document.getElementById('productStatus').value === 'true'
+                };
+                
+                const url = editingProductId ? 
+                    `${API_BASE}/items/${editingProductId}` : 
+                    `${API_BASE}/items`;
+                const method = editingProductId ? 'PUT' : 'POST';
+                
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+                    },
+                    body: JSON.stringify(productData)
+                });
+                
+                if (response.ok) {
+                    closeProductModal();
+                    loadProducts();
+                    loadStats();
+                } else {
+                    const errorData = await response.json();
+                    alert('操作失敗: ' + (errorData.error || '未知錯誤'));
+                }
+            } catch (error) {
+                alert('操作失敗: ' + error.message);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
+        });
+
+        // 圖片預覽功能
+        document.getElementById('categoryImage').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('categoryImagePreview').innerHTML = `
+                        <img src="${e.target.result}" alt="預覽圖片" style="max-width: 200px; max-height: 200px; border-radius: 5px;">
+                        <p style="margin-top: 0.5rem; color: #666;">預覽圖片</p>
+                    `;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        document.getElementById('productImage').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('productImagePreview').innerHTML = `
+                        <img src="${e.target.result}" alt="預覽圖片" style="max-width: 200px; max-height: 200px; border-radius: 5px;">
+                        <p style="margin-top: 0.5rem; color: #666;">預覽圖片</p>
+                    `;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // 刪除和狀態切換功能
+        async function deleteCategory(categoryId) {
+            if (!confirm('確定要刪除這個分類嗎？')) return;
+            
+            try {
+                const response = await fetch(`${API_BASE}/categories/${categoryId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+                    }
+                });
+                
+                if (response.ok) {
+                    loadCategories();
+                    loadStats();
+                } else {
+                    const errorData = await response.json();
+                    alert('刪除失敗: ' + (errorData.error || '未知錯誤'));
+                }
+            } catch (error) {
+                alert('刪除失敗: ' + error.message);
+            }
+        }
+
+        async function toggleProductStatus(productId, currentStatus) {
+            try {
+                const response = await fetch(`${API_BASE}/items/${productId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+                    },
+                    body: JSON.stringify({
+                        is_active: !currentStatus
+                    })
+                });
+                
+                if (response.ok) {
+                    loadProducts();
+                    loadStats();
+                } else {
+                    const errorData = await response.json();
+                    alert('操作失敗: ' + (errorData.error || '未知錯誤'));
+                }
+            } catch (error) {
+                alert('操作失敗: ' + error.message);
+            }
+        }
+
+        // 狀態修改相關變數
+        let currentOrderId = null;
+
+        // 顯示狀態修改模態框
+        function showStatusUpdateModal(orderId, currentStatus) {
+            currentOrderId = orderId;
+            document.getElementById('modalOrderId').textContent = `#${orderId}`;
+            document.getElementById('modalCurrentStatus').textContent = getStatusText(currentStatus);
+            document.getElementById('newStatusSelect').value = currentStatus;
+            document.getElementById('statusUpdateModal').style.display = 'block';
+        }
+
+        // 關閉狀態修改模態框
+        function closeStatusUpdateModal() {
+            document.getElementById('statusUpdateModal').style.display = 'none';
+            currentOrderId = null;
+        }
+
+        // 更新訂單狀態
+        async function updateOrderStatus() {
+            if (!currentOrderId) return;
+            
+            const newStatus = document.getElementById('newStatusSelect').value;
+            const token = localStorage.getItem('adminToken');
+            
+            try {
+                const response = await fetch(`${API_BASE}/orders/${currentOrderId}/status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        status: newStatus
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `HTTP ${response.status}`);
+                }
+                
+                const data = await response.json();
+                alert(`訂單狀態已更新為: ${getStatusText(newStatus)}`);
+                
+                // 關閉模態框
+                closeStatusUpdateModal();
+                
+                // 重新載入訂單列表
+                loadOrders(currentPage);
+                
+            } catch (error) {
+                console.error('更新訂單狀態失敗:', error);
+                alert(`更新訂單狀態失敗: ${error.message}`);
+            }
+        }
+
+        // 頁面載入完成後初始化
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+
+    <!-- 狀態修改模態框 -->
+    <div id="statusUpdateModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 2rem; border-radius: 10px; min-width: 400px; max-width: 500px;">
+            <h3 style="margin-bottom: 1rem; color: #333;">修改訂單狀態</h3>
+            <p style="margin-bottom: 1rem; color: #666;">訂單編號: <strong id="modalOrderId"></strong></p>
+            <p style="margin-bottom: 1rem; color: #666;">目前狀態: <strong id="modalCurrentStatus"></strong></p>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">新狀態:</label>
+                <select id="newStatusSelect" style="width: 100%; padding: 0.75rem; border: 2px solid #e1e5e9; border-radius: 5px; font-size: 1rem;">
+                    <option value="pending">待處理</option>
+                    <option value="confirmed">已確認</option>
+                    <option value="shipped">已出貨</option>
+                    <option value="delivered">已送達</option>
+                    <option value="cancelled">已取消</option>
+                </select>
+            </div>
+            
+            <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                <button onclick="closeStatusUpdateModal()" 
+                        style="padding: 0.75rem 1.5rem; background: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                    取消
+                </button>
+                <button onclick="updateOrderStatus()" 
+                        style="padding: 0.75rem 1.5rem; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                    確認修改
+                </button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

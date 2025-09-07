@@ -1,0 +1,900 @@
+{% extends "base.html" %}
+
+{% block title %}結帳 - 購物網站{% endblock %}
+
+{% block extra_css %}
+<style>
+    .checkout-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .checkout-header {
+        background: white;
+        padding: 2rem;
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+
+    .checkout-header h1 {
+        font-size: 2.5rem;
+        color: #333;
+        margin-bottom: 1rem;
+    }
+
+    .checkout-content {
+        display: grid;
+        grid-template-columns: 1fr 400px;
+        gap: 2rem;
+    }
+
+    .checkout-form {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        padding: 2rem;
+    }
+
+    .order-summary {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        padding: 2rem;
+        height: fit-content;
+        position: sticky;
+        top: 2rem;
+    }
+
+    .form-section {
+        margin-bottom: 2rem;
+    }
+
+    .form-section h3 {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #e9ecef;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group label {
+        display: block;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 0.5rem;
+        font-size: 1rem;
+    }
+
+    .form-group label.required::after {
+        content: " *";
+        color: #dc3545;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: border-color 0.3s ease;
+        box-sizing: border-box;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: #007bff;
+        box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
+    }
+
+    .form-control.error {
+        border-color: #dc3545;
+    }
+
+    .error-message {
+        color: #dc3545;
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+
+    .store-info {
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        background: #f8f9fa;
+        padding: 1rem;
+        margin-top: 1rem;
+    }
+
+    .store-info h4 {
+        color: #007bff;
+        margin-bottom: 0.75rem;
+        font-size: 1.1rem;
+    }
+
+    .store-info p {
+        margin-bottom: 0.5rem;
+        color: #333;
+    }
+
+    .store-info p:last-child {
+        margin-bottom: 0;
+    }
+
+    .btn {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .btn-primary {
+        background: #007bff;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #0056b3;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,123,255,0.3);
+    }
+
+    .btn-secondary {
+        background: #6c757d;
+        color: white;
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+    }
+
+    .btn-secondary:hover {
+        background: #545b62;
+    }
+
+    .order-items {
+        margin-bottom: 1.5rem;
+    }
+
+    .order-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem 0;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .order-item:last-child {
+        border-bottom: none;
+    }
+
+    .item-image {
+        width: 60px;
+        height: 60px;
+        object-fit: contain;
+        background: #f8f9fa;
+        border-radius: 5px;
+        padding: 0.25rem;
+    }
+
+    .item-details {
+        flex: 1;
+    }
+
+    .item-name {
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 0.25rem;
+    }
+
+    .item-quantity {
+        color: #666;
+        font-size: 0.9rem;
+    }
+
+    .item-price {
+        font-weight: 600;
+        color: #007bff;
+    }
+
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        font-size: 1rem;
+    }
+
+    .summary-row.total {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #333;
+        border-top: 2px solid #dee2e6;
+        padding-top: 1rem;
+        margin-top: 1rem;
+    }
+
+    .submit-btn {
+        width: 100%;
+        padding: 1rem 2rem;
+        background: #28a745;
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 1.2rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 1.5rem;
+    }
+
+    .submit-btn:hover {
+        background: #218838;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(40,167,69,0.3);
+    }
+
+    .submit-btn:disabled {
+        background: #6c757d;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+
+    .empty-cart {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: #666;
+    }
+
+    .empty-cart h3 {
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+        color: #333;
+    }
+
+    .loading-checkout {
+        text-align: center;
+        padding: 4rem 2rem;
+    }
+
+    .loading-spinner {
+        display: inline-block;
+        width: 40px;
+        height: 40px;
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #007bff;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    /* 響應式設計 */
+    @media (max-width: 768px) {
+        .checkout-container {
+            padding: 1rem;
+        }
+
+        .checkout-content {
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+
+        .order-summary {
+            position: static;
+        }
+
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="checkout-container">
+    <div class="checkout-header">
+        <h1>結帳</h1>
+        <p>請填寫您的資料以完成訂單</p>
+    </div>
+
+    <div id="checkoutContainer">
+        <div class="loading-checkout">
+            <div class="loading-spinner"></div>
+            <p>載入結帳資料中...</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let cartItems = [];
+    let selectedStore = null;
+
+    // 載入已選中的門市
+    async function loadSelectedStore() {
+        try {
+            const response = await fetch(`${API_BASE}/selected-store`);
+            if (response.ok) {
+                selectedStore = await response.json();
+                console.log('載入已選中的門市:', selectedStore);
+                displaySelectedStore();
+            } else {
+                console.log('尚未選擇門市');
+            }
+        } catch (error) {
+            console.log('載入門市選擇失敗:', error);
+        }
+    }
+
+    // 顯示已選中的門市
+    function displaySelectedStore() {
+        if (selectedStore) {
+            // 自動設置取貨方式為7-11店到店
+            const deliveryMethodSelect = document.getElementById('deliveryMethod');
+            if (deliveryMethodSelect) {
+                deliveryMethodSelect.value = '711_store';
+            }
+            
+            // 顯示門市選擇區域
+            const storeSelection = document.getElementById('storeSelection');
+            if (storeSelection) {
+                storeSelection.style.display = 'block';
+            }
+            
+            // 顯示已選中的門市資訊
+            const selectedStoreName = document.getElementById('selectedStoreName');
+            const selectedStoreAddress = document.getElementById('selectedStoreAddress');
+            const selectedStoreInfo = document.getElementById('selectedStoreInfo');
+            const storeSelectionArea = document.getElementById('storeSelectionArea');
+            
+            if (selectedStoreName) selectedStoreName.textContent = selectedStore.storename;
+            if (selectedStoreAddress) selectedStoreAddress.textContent = selectedStore.storeaddress;
+            if (selectedStoreInfo) selectedStoreInfo.style.display = 'block';
+            if (storeSelectionArea) storeSelectionArea.style.display = 'none';
+        } else {
+            // 沒有選中門市時，顯示選擇按鈕
+            const selectedStoreInfo = document.getElementById('selectedStoreInfo');
+            const storeSelectionArea = document.getElementById('storeSelectionArea');
+            
+            if (selectedStoreInfo) selectedStoreInfo.style.display = 'none';
+            if (storeSelectionArea) storeSelectionArea.style.display = 'block';
+        }
+    }
+
+    // 取貨方式改變
+    function onDeliveryMethodChange() {
+        const deliveryMethod = document.getElementById('deliveryMethod').value;
+        const storeSelection = document.getElementById('storeSelection');
+        
+        if (deliveryMethod === '711_store') {
+            if (storeSelection) {
+                storeSelection.style.display = 'block';
+            }
+            // 如果有已選中的門市，顯示門市資訊；否則顯示選擇按鈕
+            if (selectedStore) {
+                displaySelectedStore();
+            } else {
+                const selectedStoreInfo = document.getElementById('selectedStoreInfo');
+                const storeSelectionArea = document.getElementById('storeSelectionArea');
+                
+                if (selectedStoreInfo) selectedStoreInfo.style.display = 'none';
+                if (storeSelectionArea) storeSelectionArea.style.display = 'block';
+            }
+        } else {
+            if (storeSelection) {
+                storeSelection.style.display = 'none';
+            }
+        }
+    }
+
+    // 選擇門市（同分頁跳轉）
+    function selectStore() {
+        console.log('selectStore 函數被調用');
+        
+        try {
+            // 保存當前表單資料
+            saveFormData();
+            console.log('表單資料已保存');
+            
+            // 跳轉到7-11門市選擇API（同分頁跳轉）
+            const cvsUrl = 'https://emap.presco.com.tw/c2cemap.ashx?eshopid=870&&servicetype=1&url=http://localhost:5000/cvs_callback';
+            console.log('準備跳轉到門市選擇頁面:', cvsUrl);
+            
+            // 直接跳轉到7-11門市選擇頁面
+            window.location.href = cvsUrl;
+            
+        } catch (error) {
+            console.error('selectStore 函數執行錯誤:', error);
+            alert('選擇門市時發生錯誤: ' + error.message);
+        }
+    }
+
+    // 清除門市選擇
+    async function clearStoreSelection() {
+        try {
+            const response = await fetch(`${API_BASE}/selected-store`, {
+                method: 'DELETE'
+            });
+            
+            if (response.ok) {
+                selectedStore = null;
+                // 重置取貨方式
+                document.getElementById('deliveryMethod').value = '';
+                // 隱藏門市選擇區域
+                document.getElementById('storeSelection').style.display = 'none';
+                // 顯示選擇按鈕
+                document.getElementById('selectedStoreInfo').style.display = 'none';
+                document.getElementById('storeSelectionArea').style.display = 'block';
+            }
+        } catch (error) {
+            console.error('清除門市選擇失敗:', error);
+        }
+    }
+
+    // 從本地存儲載入購物車
+    function loadCartFromStorage() {
+        const cartData = localStorage.getItem('shopping_cart');
+        if (cartData) {
+            try {
+                cartItems = JSON.parse(cartData);
+            } catch (error) {
+                console.error('載入購物車失敗:', error);
+                cartItems = [];
+            }
+        }
+        
+        if (cartItems.length === 0) {
+            showEmptyCart();
+            return;
+        }
+        
+        displayCheckoutForm();
+    }
+
+    // 保存表單資料到本地存儲
+    function saveFormData() {
+        try {
+            const formData = {
+                firstName: getElementValue('firstName'),
+                lastName: getElementValue('lastName'),
+                email: getElementValue('email'),
+                phone: getElementValue('phone'),
+                address: getElementValue('address'),
+                city: getElementValue('city'),
+                deliveryMethod: getElementValue('deliveryMethod'),
+                paymentMethod: getElementValue('paymentMethod'),
+                notes: getElementValue('notes')
+            };
+            
+            localStorage.setItem('checkout_form_data', JSON.stringify(formData));
+            console.log('表單資料已保存:', formData);
+        } catch (error) {
+            console.error('保存表單資料時發生錯誤:', error);
+        }
+    }
+
+    // 安全獲取元素值的輔助函數
+    function getElementValue(elementId) {
+        const element = document.getElementById(elementId);
+        return element ? element.value : '';
+    }
+
+    // 從本地存儲恢復表單資料
+    function restoreFormData() {
+        const formData = localStorage.getItem('checkout_form_data');
+        if (formData) {
+            try {
+                const data = JSON.parse(formData);
+                
+                // 恢復表單欄位
+                setElementValue('firstName', data.firstName);
+                setElementValue('lastName', data.lastName);
+                setElementValue('email', data.email);
+                setElementValue('phone', data.phone);
+                setElementValue('address', data.address);
+                setElementValue('city', data.city);
+                
+                if (data.deliveryMethod) {
+                    setElementValue('deliveryMethod', data.deliveryMethod);
+                    onDeliveryMethodChange(); // 觸發取貨方式變更事件
+                }
+                
+                setElementValue('paymentMethod', data.paymentMethod);
+                setElementValue('notes', data.notes);
+                
+                console.log('表單資料已恢復:', data);
+            } catch (error) {
+                console.error('恢復表單資料失敗:', error);
+            }
+        }
+    }
+
+    // 安全設置元素值的輔助函數
+    function setElementValue(elementId, value) {
+        const element = document.getElementById(elementId);
+        if (element && value) {
+            element.value = value;
+        }
+    }
+
+    // 清除保存的表單資料
+    function clearFormData() {
+        localStorage.removeItem('checkout_form_data');
+        console.log('表單資料已清除');
+    }
+
+    // 顯示空購物車
+    function showEmptyCart() {
+        document.getElementById('checkoutContainer').innerHTML = `
+            <div class="empty-cart">
+                <h3>購物車是空的</h3>
+                <p>您還沒有添加任何商品到購物車</p>
+                <a href="/" class="continue-shopping-btn" style="
+                    display: inline-block;
+                    padding: 1rem 2rem;
+                    background: #007bff;
+                    color: white;
+                    text-decoration: none;
+                    border-radius: 10px;
+                    font-weight: 600;
+                    transition: all 0.3s ease;
+                ">繼續購物</a>
+            </div>
+        `;
+    }
+
+    // 顯示結帳表單
+    function displayCheckoutForm() {
+        const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        const tax = subtotal * 0.1; // 10% 稅
+        const total = subtotal + tax;
+
+        document.getElementById('checkoutContainer').innerHTML = `
+            <div class="checkout-content">
+                <div class="checkout-form">
+                    <form id="checkoutForm" onsubmit="submitOrder(event)">
+                        <div class="form-section">
+                            <h3>聯絡資訊</h3>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="firstName" class="required">名字</label>
+                                    <input type="text" id="firstName" name="firstName" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="lastName" class="required">姓氏</label>
+                                    <input type="text" id="lastName" name="lastName" class="form-control" required>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="email" class="required">電子郵件</label>
+                                <input type="email" id="email" name="email" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="phone" class="required">電話號碼</label>
+                                <input type="tel" id="phone" name="phone" class="form-control" required>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h3>取貨方式</h3>
+                            <div class="form-group">
+                                <label for="deliveryMethod" class="required">取貨方式</label>
+                                <select id="deliveryMethod" name="deliveryMethod" class="form-control" required onchange="onDeliveryMethodChange()">
+                                    <option value="">請選擇取貨方式</option>
+                                    <option value="711_store">7-11店到店</option>
+                                </select>
+                            </div>
+                            <div id="storeSelection" class="form-group" style="display: none;">
+                                <label class="required">選擇7-11門市</label>
+                                <div id="storeSelectionArea">
+                                    <button type="button" id="selectStoreBtn" class="btn btn-primary" onclick="selectStore()">
+                                        請選擇7-11門市
+                                    </button>
+                                </div>
+                                <div id="selectedStoreInfo" class="store-info" style="margin-top: 1rem; padding: 1rem; background: #f8f9fa; border-radius: 5px; display: none;">
+                                    <h4>已選擇門市</h4>
+                                    <p><strong>門市名稱：</strong><span id="selectedStoreName"></span></p>
+                                    <p><strong>門市地址：</strong><span id="selectedStoreAddress"></span></p>
+                                    <button type="button" class="btn btn-secondary" onclick="clearStoreSelection()" style="margin-top: 10px;">
+                                        重新選擇門市
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h3>付款資訊</h3>
+                            <div class="form-group">
+                                <label for="paymentMethod" class="required">付款方式</label>
+                                <select id="paymentMethod" name="paymentMethod" class="form-control" required>
+                                    <option value="">請選擇付款方式</option>
+{#                                    <option value="credit_card">信用卡</option>#}
+{#                                    <option value="bank_transfer">銀行轉帳</option>#}
+                                    <option value="cash_on_delivery">貨到付款</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="notes">備註</label>
+                                <textarea id="notes" name="notes" class="form-control" rows="3" placeholder="如有特殊需求請在此說明..."></textarea>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="submit-btn" id="submitBtn">
+                            提交訂單
+                        </button>
+                    </form>
+                </div>
+
+                <div class="order-summary">
+                    <h3>訂單摘要</h3>
+                    <div class="order-items">
+                        ${cartItems.map(item => `
+                            <div class="order-item">
+                                <img src="${item.image_url || '/uploads/placeholder.jpg'}" 
+                                     alt="${item.name}" 
+                                     class="item-image"
+                                     onerror="this.src='/uploads/placeholder.jpg'">
+                                <div class="item-details">
+                                    <div class="item-name">${item.name}</div>
+                                    <div class="item-quantity">數量: ${item.quantity}</div>
+                                </div>
+                                <div class="item-price">$${item.price * item.quantity}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    <div class="summary-row">
+                        <span>小計:</span>
+                        <span>$${subtotal.toFixed(2)}</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>稅費 (10%):</span>
+                        <span>$${tax.toFixed(2)}</span>
+                    </div>
+                    <div class="summary-row total">
+                        <span>總計:</span>
+                        <span>$${total.toFixed(2)}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // 表單驗證
+    function validateForm() {
+        const requiredFields = [
+            'firstName', 'lastName', 'email', 'phone', 
+            'deliveryMethod', 'paymentMethod'
+        ];
+        
+        let isValid = true;
+        
+        requiredFields.forEach(fieldName => {
+            const field = document.getElementById(fieldName);
+            const value = field.value.trim();
+            
+            if (!value) {
+                field.classList.add('error');
+                showFieldError(field, '此欄位為必填');
+                isValid = false;
+            } else {
+                field.classList.remove('error');
+                clearFieldError(field);
+            }
+        });
+        
+        // 驗證7-11門市選擇
+        const deliveryMethod = document.getElementById('deliveryMethod').value;
+        if (deliveryMethod === '711_store') {
+            if (!selectedStore) {
+                alert('請選擇7-11門市');
+                isValid = false;
+            }
+        }
+        
+        // 驗證電子郵件格式
+        const email = document.getElementById('email').value.trim();
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (email && !emailRegex.test(email)) {
+            document.getElementById('email').classList.add('error');
+            showFieldError(document.getElementById('email'), '請輸入有效的電子郵件地址');
+            isValid = false;
+        }
+        
+        return isValid;
+    }
+
+    // 顯示欄位錯誤
+    function showFieldError(field, message) {
+        clearFieldError(field);
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'error-message';
+        errorDiv.textContent = message;
+        field.parentNode.appendChild(errorDiv);
+    }
+
+    // 清除欄位錯誤
+    function clearFieldError(field) {
+        const errorDiv = field.parentNode.querySelector('.error-message');
+        if (errorDiv) {
+            errorDiv.remove();
+        }
+    }
+
+    // 提交訂單
+    async function submitOrder(event) {
+        event.preventDefault();
+        
+        if (!validateForm()) {
+            alert('請檢查並填寫所有必填欄位');
+            return;
+        }
+        
+        const submitBtn = document.getElementById('submitBtn');
+        submitBtn.disabled = true;
+        submitBtn.textContent = '提交中...';
+        
+        try {
+            // 收集表單數據
+            const formData = new FormData(event.target);
+            const deliveryMethod = formData.get('deliveryMethod');
+            
+            const orderData = {
+                customer: {
+                    first_name: formData.get('firstName'),
+                    last_name: formData.get('lastName'),
+                    email: formData.get('email'),
+                    phone: formData.get('phone'),
+                    address: selectedStore ? selectedStore.storeaddress : '',
+                    city: selectedStore ? selectedStore.storeaddress.split('市')[0] + '市' : '',
+                    postal_code: '',
+                    country: 'TW'
+                },
+                delivery_method: deliveryMethod,
+                store_id: selectedStore ? selectedStore.storeid : null,
+                store_info: selectedStore,
+                payment_method: formData.get('paymentMethod'),
+                notes: formData.get('notes') || '',
+                items: cartItems.map(item => ({
+                    item_id: item.id,
+                    quantity: item.quantity,
+                    price: item.price
+                }))
+            };
+            
+            // 提交訂單到後端
+            const response = await fetch(`${API_BASE}/orders`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(orderData)
+            });
+            
+            if (!response.ok) {
+                throw new Error('提交訂單失敗');
+            }
+            
+            const result = await response.json();
+            
+            // 清空購物車和表單資料
+            localStorage.removeItem('shopping_cart');
+            clearFormData();
+            
+            // 跳轉到成功頁面
+            window.location.href = `/order-success/${result.order_id}`;
+            
+        } catch (error) {
+            console.error('提交訂單錯誤:', error);
+            alert('提交訂單失敗，請稍後再試');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = '提交訂單';
+        }
+    }
+
+    // 頁面載入時初始化
+    document.addEventListener('DOMContentLoaded', function() {
+        loadCartFromStorage();
+        loadSelectedStore();
+        // 延遲恢復表單資料，確保表單已經渲染
+        setTimeout(() => {
+            restoreFormData();
+            setupFormAutoSave();
+            // 測試按鈕是否正確綁定
+            testButtonBinding();
+            // 檢查是否從門市選擇返回
+            checkIfReturnedFromStoreSelection();
+        }, 100);
+    });
+
+    // 檢查是否從門市選擇返回
+    function checkIfReturnedFromStoreSelection() {
+        // 檢查URL參數或localStorage標記
+        const urlParams = new URLSearchParams(window.location.search);
+        const fromStoreSelection = urlParams.get('from_store_selection');
+        
+        if (fromStoreSelection === 'true') {
+            console.log('從門市選擇頁面返回');
+            // 清除URL參數
+            const newUrl = window.location.pathname;
+            window.history.replaceState({}, document.title, newUrl);
+            
+            // 重新載入門市選擇狀態
+            setTimeout(() => {
+                loadSelectedStore();
+            }, 500);
+        }
+    }
+
+    // 測試按鈕綁定
+    function testButtonBinding() {
+        const selectStoreBtn = document.getElementById('selectStoreBtn');
+        if (selectStoreBtn) {
+            console.log('門市選擇按鈕已找到');
+            // 添加額外的事件監聽器作為備用
+            selectStoreBtn.addEventListener('click', function(e) {
+                console.log('按鈕點擊事件觸發');
+                e.preventDefault();
+                selectStore();
+            });
+        } else {
+            console.log('門市選擇按鈕未找到');
+        }
+    }
+
+    // 設置表單自動保存
+    function setupFormAutoSave() {
+        const formFields = [
+            'firstName', 'lastName', 'email', 'phone', 
+            'address', 'city', 'deliveryMethod', 'paymentMethod', 'notes'
+        ];
+        
+        formFields.forEach(fieldId => {
+            const field = document.getElementById(fieldId);
+            if (field) {
+                // 為每個欄位添加輸入事件監聽器
+                field.addEventListener('input', debounce(saveFormData, 500));
+                field.addEventListener('change', saveFormData);
+                console.log(`已為欄位 ${fieldId} 設置自動保存`);
+            } else {
+                console.warn(`欄位 ${fieldId} 不存在，跳過自動保存設置`);
+            }
+        });
+    }
+
+    // 防抖函數，避免頻繁保存
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+</script>
+{% endblock %}

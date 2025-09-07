@@ -1,0 +1,243 @@
+<!-- 商品新增/編輯模態框 -->
+<div id="productModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+    <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 2rem; border-radius: 10px; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h3 id="productModalTitle">新增商品</h3>
+            <button onclick="closeProductModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
+        </div>
+
+        <form id="productForm">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">商品名稱 *</label>
+                    <input type="text" id="productName" required style="width: 100%; padding: 0.75rem; border: 2px solid #e1e5e9; border-radius: 5px; font-size: 1rem;">
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">商品分類 *</label>
+                    <select id="productCategory" required style="width: 100%; padding: 0.75rem; border: 2px solid #e1e5e9; border-radius: 5px; font-size: 1rem;">
+                        <option value="">請選擇分類</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 1rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">商品描述</label>
+                <textarea id="productDescription" rows="3" style="width: 100%; padding: 0.75rem; border: 2px solid #e1e5e9; border-radius: 5px; font-size: 1rem; resize: vertical;"></textarea>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">價格 *</label>
+                    <input type="number" id="productPrice" step="0.01" min="0" required style="width: 100%; padding: 0.75rem; border: 2px solid #e1e5e9; border-radius: 5px; font-size: 1rem;">
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">庫存數量 *</label>
+                    <input type="number" id="productQuantity" min="0" required style="width: 100%; padding: 0.75rem; border: 2px solid #e1e5e9; border-radius: 5px; font-size: 1rem;">
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">上架狀態</label>
+                    <select id="productStatus" style="width: 100%; padding: 0.75rem; border: 2px solid #e1e5e9; border-radius: 5px; font-size: 1rem;">
+                        <option value="true">上架</option>
+                        <option value="false">下架</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">商品圖片</label>
+                <input type="file" id="productImage" accept="image/*" style="width: 100%; padding: 0.5rem; border: 2px solid #e1e5e9; border-radius: 5px;">
+                <div id="productImagePreview" style="margin-top: 1rem; text-align: center;"></div>
+            </div>
+
+            <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                <button type="button" onclick="closeProductModal()" style="padding: 0.75rem 1.5rem; border: 2px solid #ddd; background: white; border-radius: 5px; cursor: pointer;">取消</button>
+                <button type="submit" id="productSubmitBtn" style="padding: 0.75rem 1.5rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 5px; cursor: pointer;">儲存</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+let editingProductId = null;
+
+// 顯示新增商品模態框
+function showAddProductModal() {
+    editingProductId = null;
+    document.getElementById('productModalTitle').textContent = '新增商品';
+    document.getElementById('productForm').reset();
+    document.getElementById('productImagePreview').innerHTML = '';
+    loadCategoryOptions();
+    document.getElementById('productModal').style.display = 'block';
+}
+
+// 顯示編輯商品模態框
+function editProduct(productId) {
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
+
+    editingProductId = productId;
+    document.getElementById('productModalTitle').textContent = '編輯商品';
+    document.getElementById('productName').value = product.name;
+    document.getElementById('productDescription').value = product.description || '';
+    document.getElementById('productPrice').value = product.price;
+    document.getElementById('productQuantity').value = product.quantity_left;
+    document.getElementById('productStatus').value = product.is_active.toString();
+    
+    // 載入分類選項並選中當前分類
+    loadCategoryOptions(product.category_id);
+    
+    // 顯示現有圖片
+    if (product.image_url) {
+        document.getElementById('productImagePreview').innerHTML = `
+            <img src="${product.image_url}" alt="商品圖片" style="max-width: 200px; max-height: 200px; border-radius: 5px;">
+            <p style="margin-top: 0.5rem; color: #666;">目前圖片</p>
+        `;
+    } else {
+        document.getElementById('productImagePreview').innerHTML = '';
+    }
+    
+    document.getElementById('productModal').style.display = 'block';
+}
+
+// 載入分類選項
+function loadCategoryOptions(selectedId = null) {
+    const select = document.getElementById('productCategory');
+    select.innerHTML = '<option value="">請選擇分類</option>';
+    
+    categories.forEach(category => {
+        const option = document.createElement('option');
+        option.value = category.id;
+        option.textContent = category.name;
+        if (selectedId && category.id === selectedId) {
+            option.selected = true;
+        }
+        select.appendChild(option);
+    });
+}
+
+// 關閉商品模態框
+function closeProductModal() {
+    document.getElementById('productModal').style.display = 'none';
+    editingProductId = null;
+}
+
+// 圖片預覽
+document.getElementById('productImage').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('productImagePreview').innerHTML = `
+                <img src="${e.target.result}" alt="預覽圖片" style="max-width: 200px; max-height: 200px; border-radius: 5px;">
+                <p style="margin-top: 0.5rem; color: #666;">預覽圖片</p>
+            `;
+        };
+        reader.readAsDataURL(file);
+    }
+});
+
+// 商品表單提交
+document.getElementById('productForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const submitBtn = document.getElementById('productSubmitBtn');
+    const originalText = submitBtn.textContent;
+    submitBtn.disabled = true;
+    submitBtn.textContent = '儲存中...';
+    
+    try {
+        let imageUrl = '';
+        
+        // 如果有選擇新圖片，先上傳
+        const imageFile = document.getElementById('productImage').files[0];
+        if (imageFile) {
+            const formData = new FormData();
+            formData.append('file', imageFile);
+            
+            const uploadResponse = await fetch(`${API_BASE}/upload/product`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+                },
+                body: formData
+            });
+            
+            if (uploadResponse.ok) {
+                const uploadData = await uploadResponse.json();
+                imageUrl = uploadData.image_url;
+            } else {
+                throw new Error('圖片上傳失敗');
+            }
+        } else if (editingProductId) {
+            // 編輯時如果沒有選擇新圖片，保持原圖片
+            const product = products.find(p => p.id === editingProductId);
+            imageUrl = product.image_url || '';
+        }
+        
+        // 提交商品資料
+        const productData = {
+            name: document.getElementById('productName').value,
+            description: document.getElementById('productDescription').value,
+            price: parseFloat(document.getElementById('productPrice').value),
+            quantity_left: parseInt(document.getElementById('productQuantity').value),
+            category_id: parseInt(document.getElementById('productCategory').value),
+            image_url: imageUrl,
+            is_active: document.getElementById('productStatus').value === 'true'
+        };
+        
+        const url = editingProductId ? 
+            `${API_BASE}/items/${editingProductId}` : 
+            `${API_BASE}/items`;
+        const method = editingProductId ? 'PUT' : 'POST';
+        
+        const response = await fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+            },
+            body: JSON.stringify(productData)
+        });
+        
+        if (response.ok) {
+            closeProductModal();
+            loadProducts();
+            loadStats(); // 更新統計資料
+        } else {
+            const errorData = await response.json();
+            alert('操作失敗: ' + (errorData.error || '未知錯誤'));
+        }
+    } catch (error) {
+        alert('操作失敗: ' + error.message);
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+    }
+});
+
+// 切換商品上架狀態
+async function toggleProductStatus(productId, currentStatus) {
+    try {
+        const response = await fetch(`${API_BASE}/items/${productId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+            },
+            body: JSON.stringify({
+                is_active: !currentStatus
+            })
+        });
+        
+        if (response.ok) {
+            loadProducts();
+            loadStats();
+        } else {
+            const errorData = await response.json();
+            alert('操作失敗: ' + (errorData.error || '未知錯誤'));
+        }
+    } catch (error) {
+        alert('操作失敗: ' + error.message);
+    }
+}
+</script>
