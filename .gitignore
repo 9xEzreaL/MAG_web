@@ -61,7 +61,7 @@ Thumbs.db
 *.crt
 
 # Uploads (optional - uncomment if you don't want to track uploads)
-# uploads/
+uploads/
 
 # Temporary files
 *.tmp
