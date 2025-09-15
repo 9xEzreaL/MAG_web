@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}購物網站{% endblock %}</title>
+    <title>{% block title %}IQOS TW{% endblock %}</title>
     <style>
         * {
             margin: 0;
@@ -32,6 +32,21 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        /* 電腦版：隱藏手機版購物車，顯示桌面版購物車 */
+        .mobile-cart {
+            display: none !important;
+        }
+
+        .desktop-cart {
+            display: flex !important;
         }
 
         .logo {
@@ -134,9 +149,24 @@
                 padding: 1rem;
             }
 
+            .logo-section {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            /* 手機版：顯示手機版購物車，隱藏桌面版購物車 */
+            .mobile-cart {
+                display: flex !important;
+            }
+
+            .desktop-cart {
+                display: none !important;
+            }
+
             .nav-categories {
                 flex-wrap: wrap;
                 justify-content: center;
+                width: 100%;
             }
 
             .main-content {
@@ -164,13 +194,18 @@
 <body>
     <header class="header">
         <div class="header-content">
-            <a href="/" class="logo">
-                <img src="/uploads/IQOS_Logo.svg" alt="Logo" onerror="this.style.display='none'">
-            </a>
+            <div class="logo-section">
+                <a href="/" class="logo">
+                    <img src="/uploads/IQOS_Logo.svg" alt="Logo" onerror="this.style.display='none'">
+                </a>
+                <div class="cart-section mobile-cart">
+                    <img src="/uploads/cart.svg" alt="購物車" class="cart-icon" onclick="window.location.href='/cart'">
+                </div>
+            </div>
             <nav class="nav-categories" id="categoryNav">
                 <div class="loading">載入分類中...</div>
             </nav>
-            <div class="cart-section">
+            <div class="cart-section desktop-cart">
                 <img src="/uploads/cart.svg" alt="購物車" class="cart-icon" onclick="window.location.href='/cart'">
             </div>
         </div>
@@ -181,7 +216,7 @@
     </main>
 
     <footer class="footer">
-        <p>&copy; 2025 購物網站. All rights reserved.</p>
+        <p>&copy; 2025 IQOS TW. All rights reserved.</p>
     </footer>
 
     <script>
@@ -233,20 +268,20 @@
         
         // 更新購物車圖標
         function updateCartIcon() {
-            const cartIcon = document.querySelector('.cart-icon');
-            if (cartIcon) {
-                const cartData = localStorage.getItem('shopping_cart');
-                let totalItems = 0;
-                
-                if (cartData) {
-                    try {
-                        const cartItems = JSON.parse(cartData);
-                        totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-                    } catch (error) {
-                        console.error('載入購物車數據失敗:', error);
-                    }
+            const cartIcons = document.querySelectorAll('.cart-icon');
+            const cartData = localStorage.getItem('shopping_cart');
+            let totalItems = 0;
+            
+            if (cartData) {
+                try {
+                    const cartItems = JSON.parse(cartData);
+                    totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+                } catch (error) {
+                    console.error('載入購物車數據失敗:', error);
                 }
-                
+            }
+            
+            cartIcons.forEach(cartIcon => {
                 if (totalItems > 0) {
                     cartIcon.style.position = 'relative';
                     cartIcon.setAttribute('data-count', totalItems);
@@ -281,7 +316,7 @@
                         badge.remove();
                     }
                 }
-            }
+            });
         }
         
         // 頁面載入時初始化

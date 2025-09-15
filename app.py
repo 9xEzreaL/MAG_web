@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_from_directory, render_template, session
+from flask import Flask, request, jsonify, send_from_directory, render_template, session, make_response
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_cors import CORS
@@ -9,6 +9,10 @@ from datetime import datetime, timedelta
 import os
 import uuid
 from config import Config
+from openpyxl import Workbook
+from openpyxl.styles import Font, Alignment, PatternFill
+from openpyxl.utils import get_column_letter
+import io
 
 app = Flask(__name__)
 
@@ -1084,6 +1088,184 @@ def search_orders():
     except Exception as e:
         print(f"搜尋訂單錯誤: {e}")
         return jsonify({'error': f'搜尋訂單失敗: {str(e)}'}), 500
+
+@app.route('/api/orders/export', methods=['GET'])
+@jwt_required()
+def export_orders_to_excel():
+    """導出訂單到Excel文件"""
+    try:
+        admin_id = get_jwt_identity()
+        admin = db.session.get(Admin, int(admin_id))
+        
+        if not admin:
+            return jsonify({'error': 'Admin not found'}), 404
+        
+        # 獲取查詢參數
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
+        status = request.args.get('status')
+        
+        # 構建查詢
+        query = Order.query
+        
+        # 日期篩選
+        if start_date:
+            try:
+                start_datetime = datetime.strptime(start_date, '%Y-%m-%d')
+                query = query.filter(Order.order_date >= start_datetime)
+            except ValueError:
+                return jsonify({'error': 'Invalid start_date format. Use YYYY-MM-DD'}), 400
+        
+        if end_date:
+            try:
+                end_datetime = datetime.strptime(end_date, '%Y-%m-%d')
+                end_datetime = end_datetime.replace(hour=23, minute=59, second=59)
+                query = query.filter(Order.order_date <= end_datetime)
+            except ValueError:
+                return jsonify({'error': 'Invalid end_date format. Use YYYY-MM-DD'}), 400
+        
+        # 狀態篩選
+        if status:
+            valid_statuses = ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled']
+            if status not in valid_statuses:
+                return jsonify({'error': f'Invalid status. Must be one of: {", ".join(valid_statuses)}'}), 400
+            query = query.filter(Order.status == status)
+        
+        # 排序
+        query = query.order_by(Order.order_date.desc())
+        orders = query.all()
+        
+        if not orders:
+            return jsonify({'error': '沒有找到符合條件的訂單'}), 404
+        
+        # 創建Excel工作簿
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "訂單匯出"
+        
+        # 設置標題行
+        headers = [
+            '訂單編號', '訂單日期', '客戶姓名', '客戶信箱', '客戶電話', 
+            '客戶地址', '總金額', '訂單狀態', '取貨方式', '門市名稱', 
+            '門市地址', '付款方式', '備註', '商品清單'
+        ]
+        
+        # 設置標題樣式
+        header_font = Font(bold=True, color="FFFFFF")
+        header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
+        header_alignment = Alignment(horizontal="center", vertical="center")
+        
+        # 寫入標題行
+        for col, header in enumerate(headers, 1):
+            cell = ws.cell(row=1, column=col, value=header)
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = header_alignment
+        
+        # 寫入訂單數據
+        for row, order in enumerate(orders, 2):
+            # 獲取客戶信息
+            customer_name = f"{order.customer.first_name} {order.customer.last_name}".strip() if order.customer else 'Unknown'
+            customer_email = order.customer.email if order.customer else ''
+            customer_phone = order.customer.phone if order.customer else ''
+            customer_address = order.customer.address if order.customer else ''
+            
+            # 獲取商品清單
+            items_list = []
+            for order_item in order.order_items:
+                items_list.append(f"{order_item.item.name} x{order_item.quantity} (${order_item.price_at_time})")
+            items_text = "; ".join(items_list)
+            
+            # 狀態中文對照
+            status_map = {
+                'pending': '待處理',
+                'confirmed': '已確認', 
+                'shipped': '已出貨',
+                'delivered': '已送達',
+                'cancelled': '已取消'
+            }
+            status_text = status_map.get(order.status, order.status)
+            
+            # 取貨方式中文對照
+            delivery_map = {
+                '711_store': '7-11店到店',
+                'home_delivery': '宅配',
+                'pickup': '自取'
+            }
+            delivery_text = delivery_map.get(order.delivery_method, order.delivery_method or '')
+            
+            # 付款方式中文對照
+            payment_map = {
+                'cash_on_delivery': '貨到付款',
+                'credit_card': '信用卡',
+                'bank_transfer': '銀行轉帳'
+            }
+            payment_text = payment_map.get(order.payment_method, order.payment_method or '')
+            
+            # 寫入數據行
+            row_data = [
+                order.id,
+                order.order_date.strftime('%Y-%m-%d %H:%M:%S'),
+                customer_name,
+                customer_email,
+                customer_phone,
+                customer_address,
+                order.total_amount,
+                status_text,
+                delivery_text,
+                order.store_name or '',
+                order.store_address or '',
+                payment_text,
+                order.notes or '',
+                items_text
+            ]
+            
+            for col, value in enumerate(row_data, 1):
+                ws.cell(row=row, column=col, value=value)
+        
+        # 自動調整列寬
+        for col in range(1, len(headers) + 1):
+            column_letter = get_column_letter(col)
+            max_length = 0
+            
+            for row in range(1, len(orders) + 2):
+                cell_value = ws[f"{column_letter}{row}"].value
+                if cell_value:
+                    max_length = max(max_length, len(str(cell_value)))
+            
+            # 設置最小寬度為10，最大寬度為50
+            adjusted_width = min(max(max_length + 2, 10), 50)
+            ws.column_dimensions[column_letter].width = adjusted_width
+        
+        # 創建響應
+        output = io.BytesIO()
+        wb.save(output)
+        output.seek(0)
+        
+        # 生成文件名
+        date_str = datetime.now().strftime('%Y%m%d_%H%M%S')
+        if start_date and end_date:
+            filename = f"orders_export_{start_date}_to_{end_date}_{date_str}.xlsx"
+        elif start_date:
+            filename = f"orders_export_{start_date}_from_{date_str}.xlsx"
+        elif end_date:
+            filename = f"orders_export_before_{end_date}_{date_str}.xlsx"
+        else:
+            filename = f"orders_export_all_{date_str}.xlsx"
+        
+        # 使用URL編碼處理中文文件名
+        from urllib.parse import quote
+        encoded_filename = quote(filename.encode('utf-8'))
+        
+        response = make_response(output.getvalue())
+        response.headers['Content-Type'] = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        response.headers['Content-Disposition'] = f'attachment; filename*=UTF-8\'\'{encoded_filename}'
+        
+        return response
+        
+    except Exception as e:
+        print(f"導出Excel錯誤: {e}")
+        return jsonify({'error': f'導出Excel失敗: {str(e)}'}), 500
 
 
 # 圖片上傳端點

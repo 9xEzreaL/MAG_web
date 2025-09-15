@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>後台管理 - 購物網站</title>
+    <title>後台管理 - IQOS</title>
     <style>
         * {
             margin: 0;
@@ -364,6 +364,7 @@
                             <button class="btn" onclick="searchOrders()">搜尋</button>
                             <button class="btn" onclick="clearOrderFilters()">清除</button>
                             <button class="btn" onclick="loadOrders()">重新載入</button>
+                            <button class="btn" onclick="exportOrdersToExcel()" style="background: #28a745;">📊 導出Excel</button>
                         </div>
                     </div>
                     <div id="ordersList"></div>
@@ -878,6 +879,93 @@
             currentFilters = {};
             currentPage = 1;
             loadOrders(1);
+        }
+
+        // 導出訂單到Excel
+        async function exportOrdersToExcel() {
+            // 獲取按鈕元素（在函數開始時就獲取，避免event.target問題）
+            const exportBtn = document.querySelector('button[onclick="exportOrdersToExcel()"]');
+            const originalText = exportBtn.textContent;
+            
+            try {
+                const token = localStorage.getItem('adminToken');
+                if (!token) {
+                    alert('請先登入');
+                    return;
+                }
+
+                // 獲取當前的篩選條件
+                const startDate = document.getElementById('startDate').value;
+                const endDate = document.getElementById('endDate').value;
+                const status = document.getElementById('statusFilter').value;
+
+                // 構建查詢參數
+                const params = new URLSearchParams();
+                if (startDate) params.append('start_date', startDate);
+                if (endDate) params.append('end_date', endDate);
+                if (status) params.append('status', status);
+
+                // 顯示載入提示
+                exportBtn.disabled = true;
+                exportBtn.textContent = '導出中...';
+
+                // 發送請求
+                const response = await fetch(`${API_BASE}/orders/export?${params}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    // 處理沒有訂單的情況
+                    if (response.status === 404) {
+                        alert('沒有找到符合條件的訂單，無法導出Excel文件。');
+                        return;
+                    }
+                    
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `HTTP ${response.status}`);
+                }
+
+                // 獲取文件名
+                const contentDisposition = response.headers.get('Content-Disposition');
+                let filename = 'orders_export.xlsx';
+                if (contentDisposition) {
+                    // 處理UTF-8編碼的文件名
+                    const utf8Match = contentDisposition.match(/filename\*=UTF-8''(.+)/);
+                    if (utf8Match) {
+                        filename = decodeURIComponent(utf8Match[1]);
+                    } else {
+                        // 備用方案：處理普通文件名
+                        const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+                        if (filenameMatch) {
+                            filename = filenameMatch[1];
+                        }
+                    }
+                }
+
+                // 下載文件
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+
+                alert('Excel文件導出成功！');
+
+            } catch (error) {
+                console.error('導出Excel失敗:', error);
+                alert(`導出Excel失敗: ${error.message}`);
+            } finally {
+                // 恢復按鈕狀態
+                exportBtn.disabled = false;
+                exportBtn.textContent = originalText;
+            }
         }
 
         // 初始化

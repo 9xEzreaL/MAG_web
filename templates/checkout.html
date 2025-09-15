@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}結帳 - 購物網站{% endblock %}
+{% block title %}IQOS - 結帳{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -567,8 +567,7 @@
     // 顯示結帳表單
     function displayCheckoutForm() {
         const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-        const tax = subtotal * 0.1; // 10% 稅
-        const total = subtotal + tax;
+        const total = subtotal; // 無稅金，總價等於小計
 
         document.getElementById('checkoutContainer').innerHTML = `
             <div class="checkout-content">
@@ -664,14 +663,6 @@
                         `).join('')}
                     </div>
                     
-                    <div class="summary-row">
-                        <span>小計:</span>
-                        <span>$${subtotal.toFixed(2)}</span>
-                    </div>
-                    <div class="summary-row">
-                        <span>稅費 (10%):</span>
-                        <span>$${tax.toFixed(2)}</span>
-                    </div>
                     <div class="summary-row total">
                         <span>總計:</span>
                         <span>$${total.toFixed(2)}</span>
